@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudLedger - Personal Finance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <style>
+        body { background-color: #0b1121; color: #f8fafc; }
+        .card-bg { background-color: #161e31; }
+        .sidebar-bg { background-color: #0f1523; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans">
+
+    <!-- แถบเมนูด้านข้าง -->
+    <aside class="sidebar-bg w-64 border-r border-gray-800 flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="p-6 flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <i class="fa-solid fa-wallet text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">CloudLedger</h1>
+                    <p class="text-xs text-green-400 flex items-center"><span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span> Modular System</p>
+                </div>
+            </div>
+            
+            <nav class="px-4 space-y-1.5 mt-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full text-left py-2.5 px-4 rounded-lg bg-blue-900/30 text-blue-400 font-medium transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-border-all mr-3 w-5"></i> หน้าหลัก & สรุปผล
+                </button>
+                <button onclick="switchTab('cash')" id="nav-cash" class="w-full text-left py-2.5 px-4 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-money-bill mr-3 w-5 text-green-500"></i> รายการเงินสด
+                </button>
+                <button onclick="switchTab('bank')" id="nav-bank" class="w-full text-left py-2.5 px-4 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-building-columns mr-3 w-5 text-blue-500"></i> รายการเงินฝากธนาคาร
+                </button>
+                <button onclick="switchTab('credit')" id="nav-credit" class="w-full text-left py-2.5 px-4 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-credit-card mr-3 w-5 text-red-500"></i> รายการบัตรเครดิต
+                </button>
+                <button onclick="switchTab('investment')" id="nav-investment" class="w-full text-left py-2.5 px-4 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-chart-line mr-3 w-5 text-yellow-500"></i> รายการเงินลงทุน
+                </button>
+                <button onclick="switchTab('goals')" id="nav-goals" class="w-full text-left py-2.5 px-4 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition flex items-center cursor-pointer">
+                    <i class="fa-solid fa-bullseye mr-3 w-5 text-orange-500"></i> รายการเป้าหมาย
+                </button>
+            </nav>
+        </div>
+
+        <!-- ส่วนแสดงอีเมลผู้ใช้และปุ่ม Logout ด้านล่าง Sidebar -->
+        <div class="p-4 border-t border-gray-800 bg-gray-900/50 m-3 rounded-xl">
+            <div class="flex items-center justify-between">
+                <div class="overflow-hidden pr-2">
+                    <p class="text-[10px] text-gray-400">เข้าสู่ระบบโดย</p>
+                    <p id="userEmailDisplay" class="text-xs font-bold text-white truncate">-</p>
+                </div>
+                <button onclick="signOut()" class="text-red-400 hover:text-red-300 text-xs p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition cursor-pointer shrink-0" title="ออกจากระบบ">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- พื้นที่แสดงเนื้อหา -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto" id="mainContent"></main>
+
+    <!-- Modal กลางสำหรับเพิ่มข้อมูล -->
+    <div id="accountModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="card-bg border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <div class="flex justify-between items-center mb-5">
+                <h2 id="accountModalTitle" class="text-xl font-bold text-white">เพิ่มข้อมูล</h2>
+                <button type="button" onclick="closeAccountModal()" class="text-gray-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form id="accountForm" onsubmit="saveDynamicData(event)" class="space-y-4">
+                <input type="hidden" id="modalType">
+                
+                <!-- ช่องเลือกประเภทเป้าหมาย -->
+                <div id="goalTypeWrapper" class="hidden">
+                    <label class="block text-sm font-medium text-gray-400 mb-1">ประเภทเป้าหมาย</label>
+                    <select id="inputGoalType" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500">
+                        <option value="PROJECT">💰 เป้าหมายการออม (Savings Project)</option>
+                        <option value="BUDGET">📉 งบประมาณรายจ่าย (Expense Budget)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1" id="labelName">ชื่อรายการ</label>
+                    <input type="text" id="inputName" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- 📌 เพิ่มช่องเลือกหมวดหมู่ (Categories) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">หมวดหมู่</label>
+                    <select id="inputCategory" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500">
+                        <option value="General">ทั่วไป / ทั่วไป</option>
+                        <option value="Food">🍔 อาหารและเครื่องดื่ม</option>
+                        <option value="Transport">🚗 การเดินทาง</option>
+                        <option value="Shopping">🛍️ ช้อปปิ้ง / ของใช้</option>
+                        <option value="Bills">💡 ค่าน้ำ / ค่าไฟ / ค่าบริการ</option>
+                        <option value="Salary">💰 รายรับ / เงินเดือน</option>
+                    </select>
+                </div>
+
+                <div id="extraField1">
+                    <label class="block text-sm font-medium text-gray-400 mb-1" id="labelText1">ข้อมูลเพิ่มเติม 1</label>
+                    <input type="text" id="inputValue1" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500">
+                </div>
+                <div id="extraField2" class="hidden">
+                    <label class="block text-sm font-medium text-gray-400 mb-1" id="labelText2">ข้อมูลเพิ่มเติม 2</label>
+                    <input type="text" id="inputValue2" class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1" id="labelAmount">จำนวนเงิน</label>
+                    <input type="number" id="inputAmount" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500" placeholder="0.00">
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button type="button" onclick="closeAccountModal()" class="w-1/2 bg-gray-700 text-white py-2.5 rounded-xl cursor-pointer">ยกเลิก</button>
+                    <button type="submit" class="w-1/2 bg-blue-600 text-white py-2.5 rounded-xl cursor-pointer font-bold">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login / Register Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 backdrop-blur-md hidden">
+        <div class="card-bg border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2"><i class="fa-solid fa-wallet text-blue-500 mr-2"></i>My Money App</h2>
+                <p id="authTitle" class="text-sm text-gray-400">กรุณาเข้าสู่ระบบเพื่อจัดการข้อมูลการเงินของคุณ</p>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">อีเมล (Email)</label>
+                    <input type="email" id="authEmail" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500" placeholder="name@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">รหัสผ่าน (Password)</label>
+                    <input type="password" id="authPassword" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500" placeholder="••••••••">
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg cursor-pointer mt-2">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
+
+            <div class="text-center mt-6">
+                <button type="button" onclick="toggleAuthMode()" id="authToggleText" class="text-xs text-gray-400 hover:text-blue-400 cursor-pointer transition">
+                    ยังไม่มีบัญชีใช่หรือไม่? สมัครสมาชิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- โหลดไฟล์ JavaScript ย่อยทั้งระบบ -->
+    <script src="data.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="bank-cash.js"></script>
+    <script src="bank.js"></script>
+    <script src="credit-card.js"></script>
+    <script src="investment.js"></script>
+    <script src="goals.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
