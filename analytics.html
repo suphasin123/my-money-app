@@ -187,14 +187,26 @@
       let rawCat = (tx.category || '').trim();
       let title = (tx.title || '').trim();
 
-      if (!rawCat || knownAccounts.includes(rawCat) || rawCat === 'KTC' || rawCat === 'KBANK' || rawCat === 'SCB') {
-        let firstWord = title.split(/[\s(]/)[0];
+      // หาก category เป็นชื่อบัตรเครดิต (เช่น [KBANK]) หรือเป็นค่าบัญชีธนาคาร ให้ดึงหมวดหมู่จากชื่อรายการ (title) แทน
+      if (!rawCat || knownAccounts.includes(rawCat) || (rawCat.startsWith('[') && rawCat.endsWith(']'))) {
+        let cleanTitle = title.replace(/\[.*?\]\s*/g, ''); // ตัดข้อความในวงเล็บ เช่น [KBANK] ออก
+        let firstWord = cleanTitle.split(/[\s(]/)[0];
         if (firstWord && !knownAccounts.includes(firstWord)) {
           return firstWord;
         }
         return 'เบ็ดเตล็ด';
       }
       return rawCat;
+    }
+
+    function getAccountChannelType(tx) {
+      const type = (tx.type || '').toUpperCase();
+      const title = (tx.title || '').trim();
+      const cat = (tx.category || '').trim();
+
+      if (type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE' || title.startsWith('[')) return 'CREDIT';
+      if (cat.includes('เงินสด') || title.includes('เงินสด')) return 'CASH';
+      return 'BANK';
     }
 
     function switchTabType(type) {
@@ -254,17 +266,6 @@
         globalTransactions = await fetchTransactions();
       }
       processAndRenderAnalytics();
-    }
-
-    function getAccountChannelType(tx) {
-      const cat = tx.category || '';
-      const title = tx.title || '';
-      const type = (tx.type || '').toUpperCase();
-
-      if (type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') return 'CREDIT';
-      if (cat.includes('KTC') || cat.includes('KBANK') || title.includes('KTC') || title.includes('KBANK')) return 'CREDIT';
-      if (cat.includes('เงินสด') || title.includes('เงินสด')) return 'CASH';
-      return 'BANK';
     }
 
     function processAndRenderAnalytics() {

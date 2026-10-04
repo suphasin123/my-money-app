@@ -762,11 +762,12 @@
 
       let cardName = document.getElementById('modalAccount') ? document.getElementById('modalAccount').value : '';
 
+      // แก้ไขตรงนี้: ให้ฟิลด์ category เก็บค่าหมวดหมู่จริง ๆ ที่ผู้ใช้เลือก
       let transactionData = {
         title: currentTransactionType === 'credit_card' ? `[${cardName}] ${description}${installmentInfo}` : description + installmentInfo,
         amount: amount,
         type: currentTransactionType === 'credit_card' ? 'CREDIT_CARD' : currentTransactionType.toUpperCase(),
-        category: currentTransactionType === 'credit_card' ? cardName : category,
+        category: category, 
         created_at: customDate ? `${customDate}T00:00:00.000Z` : new Date().toISOString()
       };
 
@@ -781,8 +782,6 @@
         transactionData.type = 'PAY_DEBT';
         transactionData.title = `ชำระหนี้ ${payTo} จาก ${payFrom} (${description})`;
         transactionData.category = payTo; 
-      } else if (currentTransactionType !== 'credit_card') {
-        transactionData.category = document.getElementById('modalAccount').value; 
       }
 
       if (typeof addTransaction === 'function') {

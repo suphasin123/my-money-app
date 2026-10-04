@@ -28,7 +28,10 @@
           <span id="userEmailDisplay" class="text-[10px] text-gray-400">กำลังโหลด...</span>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1">
+        <button onclick="openSortModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 flex items-center justify-center text-xs transition" title="จัดเรียงกระเป๋า">
+          <i class="fa-solid fa-arrow-down-wide-short"></i>
+        </button>
         <button onclick="openAddAccountModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 shadow-sm transition">
           <i class="fa-solid fa-plus"></i> เพิ่มบัญชี
         </button>
@@ -76,6 +79,7 @@
       </a>
     </nav>
 
+    <!-- Modal เพิ่มบัญชี -->
     <div id="addAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform">
         <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -109,6 +113,72 @@
       </div>
     </div>
 
+    <!-- Modal จัดเรียงลำดับกระเป๋า -->
+    <div id="sortAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
+        <div class="flex justify-between items-center mb-3 border-b pb-3">
+          <div>
+            <h3 class="font-bold text-base text-gray-800">จัดเรียงลำดับกระเป๋าเงิน</h3>
+            <p class="text-xs text-gray-400">เลือกประเภทและเลื่อนลำดับตามต้องการ</p>
+          </div>
+          <button onclick="closeSortModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="mb-3">
+          <label class="block text-xs font-semibold text-gray-500 mb-1">เลือกประเภทหมวดหมู่</label>
+          <select id="sortGroupSelect" onchange="renderSortList()" class="w-full px-4 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-blue-500">
+            <option value="CASH">เงินสดในมือ</option>
+            <option value="BANK">บัญชีธนาคาร</option>
+            <option value="CREDIT">บัตรเครดิต & หนี้สิน</option>
+            <option value="INVESTMENT">พอร์ตลงทุน</option>
+          </select>
+        </div>
+
+        <div id="sortItemListContainer" class="overflow-y-auto space-y-2 pr-1 flex-1 my-2 min-h-[150px]">
+          <!-- รายการกระเป๋าสำหรับกดเลื่อน -->
+        </div>
+
+        <button onclick="closeSortModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition mt-2">
+          เสร็จสิ้น
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal แก้ไขบัญชี -->
+    <div id="editAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 class="font-bold text-lg text-gray-800">แก้ไขข้อมูลกระเป๋าเงิน</h3>
+          <button onclick="closeEditAccountModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="editAccountForm" class="space-y-4">
+          <input type="hidden" id="editAccountId">
+          <input type="hidden" id="editAccountOldName">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ประเภทบัญชี</label>
+            <select id="editAccountTypeSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500">
+              <option value="CASH">เงินสด</option>
+              <option value="BANK">บัญชีธนาคาร</option>
+              <option value="CREDIT">บัตรเครดิต</option>
+              <option value="INVESTMENT">พอร์ตลงทุน</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ชื่อบัญชีใหม่</label>
+            <input type="text" id="editAccountNameInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500" required>
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition mt-4">
+            บันทึกการแก้ไข
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal ประวัติกระเป๋า -->
     <div id="accountHistoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
         <div class="flex justify-between items-center mb-3 border-b pb-3">
@@ -132,6 +202,7 @@
 
   <script>
     let globalTransactions = [];
+    let accountMapCache = {};
 
     function updateAccountForm() {
       const type = document.getElementById('accountTypeSelect').value;
@@ -167,15 +238,42 @@
       document.getElementById('addAccountModal').classList.add('hidden');
     }
 
+    function openSortModal() {
+      renderSortList();
+      document.getElementById('sortAccountModal').classList.remove('hidden');
+    }
+
+    function closeSortModal() {
+      document.getElementById('sortAccountModal').classList.add('hidden');
+      loadAccountsData();
+    }
+
+    function openEditAccountModal(id, currentName, currentType, event) {
+      if (event) event.stopPropagation();
+      document.getElementById('editAccountId').value = id;
+      document.getElementById('editAccountOldName').value = currentName;
+      document.getElementById('editAccountNameInput').value = currentName;
+      document.getElementById('editAccountTypeSelect').value = currentType;
+      document.getElementById('editAccountModal').classList.remove('hidden');
+    }
+
+    function closeEditAccountModal() {
+      document.getElementById('editAccountModal').classList.add('hidden');
+    }
+
     function closeAccountHistoryModal() {
       document.getElementById('accountHistoryModal').classList.add('hidden');
     }
 
     window.onclick = function(event) {
       let addModal = document.getElementById('addAccountModal');
+      let editModal = document.getElementById('editAccountModal');
       let histModal = document.getElementById('accountHistoryModal');
+      let sortModal = document.getElementById('sortAccountModal');
       if (event.target == addModal) closeAddAccountModal();
+      if (event.target == editModal) closeEditAccountModal();
       if (event.target == histModal) closeAccountHistoryModal();
+      if (event.target == sortModal) closeSortModal();
     }
 
     function handleLogout() {
@@ -197,6 +295,81 @@
           }
         }
       }
+    }
+
+    // จัดการระบบเรียงลำดับผ่าน localStorage แยกตามหมวดหมู่
+    function getCustomAccountOrder(groupKey) {
+      try {
+        let saved = localStorage.getItem(`krapao_order_${groupKey}`);
+        return saved ? JSON.parse(saved) : [];
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveCustomAccountOrder(groupKey, orderArray) {
+      try {
+        localStorage.setItem(`krapao_order_${groupKey}`, JSON.stringify(orderArray));
+      } catch(e) {}
+    }
+
+    function moveSortItem(groupKey, index, direction) {
+      let order = getCustomOrderNames(groupKey);
+      let targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= order.length) return;
+
+      let temp = order[index];
+      order[index] = order[targetIndex];
+      order[targetIndex] = temp;
+
+      saveCustomAccountOrder(groupKey, order);
+      renderSortList();
+    }
+
+    function getCustomOrderNames(groupKey) {
+      let groupItems = Object.values(accountMapCache || {}).filter(a => a.type === groupKey).map(a => a.title);
+      let savedOrder = getCustomAccountOrder(groupKey);
+      let result = [];
+
+      savedOrder.forEach(name => {
+        if (groupItems.includes(name) && !result.includes(name)) {
+          result.push(name);
+        }
+      });
+      groupItems.forEach(name => {
+        if (!result.includes(name)) {
+          result.push(name);
+        }
+      });
+      return result;
+    }
+
+    function renderSortList() {
+      const groupKey = document.getElementById('sortGroupSelect').value;
+      const container = document.getElementById('sortItemListContainer');
+      container.innerHTML = '';
+
+      let names = getCustomOrderNames(groupKey);
+      if (names.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 text-xs py-6">ไม่มีกระเป๋าเงินในหมวดหมู่นี้</p>';
+        return;
+      }
+
+      names.forEach((name, idx) => {
+        container.innerHTML += `
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-700">${idx + 1}. ${name}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="moveSortItem('${groupKey}', ${idx}, -1)" class="px-2.5 py-1 bg-white border border-gray-200 hover:bg-blue-50 text-gray-600 rounded-lg text-xs" ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}>
+                <i class="fa-solid fa-arrow-up"></i> ขึ้น
+              </button>
+              <button onclick="moveSortItem('${groupKey}', ${idx}, 1)" class="px-2.5 py-1 bg-white border border-gray-200 hover:bg-blue-50 text-gray-600 rounded-lg text-xs" ${idx === names.length - 1 ? 'opacity-40 cursor-not-allowed' : ''}>
+                ลง <i class="fa-solid fa-arrow-down"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
     }
 
     function parseTransferInfo(titleText, defaultAccount = '') {
@@ -373,6 +546,8 @@
         }
       });
 
+      accountMapCache = accountMap;
+
       globalTransactions.forEach(item => {
         const type = item.type ? item.type.toUpperCase() : '';
         const amount = parseFloat(item.amount) || 0;
@@ -447,6 +622,12 @@
         }
       });
 
+      // จัดเรียงลำดับตามที่เซฟไว้ใน Modal จัดเรียง
+      Object.keys(groups).forEach(key => {
+        let orderedNames = getCustomOrderNames(key);
+        groups[key].sort((a, b) => orderedNames.indexOf(a.title) - orderedNames.indexOf(b.title));
+      });
+
       function renderGroupHTML(title, items, iconClass, colorClass, isLiability = false) {
         if (items.length === 0) return '';
         
@@ -468,9 +649,16 @@
                   <p class="text-[11px] text-gray-400">${item.category}</p>
                 </div>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="font-bold ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
-                <button onclick="removeAccount('${item.id}', event)" class="w-8 h-8 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition" title="ลบรายการ">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-xs ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
+
+                <!-- ปุ่มแก้ไขข้อมูลกระเป๋า -->
+                <button onclick="openEditAccountModal('${item.id}', '${item.title}', '${item.type}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center transition" title="แก้ไขกระเป๋า">
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+
+                <!-- ปุ่มลบ -->
+                <button onclick="removeAccount('${item.id}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition" title="ลบรายการ">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               </div>
@@ -503,6 +691,7 @@
       document.getElementById('totalLiabilitiesDisplay').innerText = `฿${totalLiabilities.toLocaleString()}`;
     }
 
+    // บันทึกเพิ่มบัญชีใหม่
     document.getElementById('accountForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -521,8 +710,43 @@
       }
     });
 
+    // บันทึกแก้ไขบัญชี (อัปเดต title และ type ในตาราง transactions ของ Supabase)
+    document.getElementById('editAccountForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('editAccountId').value;
+      const newName = document.getElementById('editAccountNameInput').value.trim();
+      const newType = document.getElementById('editAccountTypeSelect').value;
+
+      if (!newName) return;
+
+      try {
+        if (!window.dbClient) {
+          alert('ยังไม่ได้เชื่อมต่อฐานข้อมูล');
+          return;
+        }
+
+        const { error } = await window.dbClient
+          .from('transactions')
+          .update({ title: newName, type: newType })
+          .eq('id', id);
+
+        if (error) {
+          alert('แก้ไขไม่สำเร็จ: ' + error.message);
+          return;
+        }
+
+        alert('แก้ไขข้อมูลกระเป๋าสำเร็จ!');
+        closeEditAccountModal();
+        loadAccountsData();
+
+      } catch (err) {
+        console.error(err);
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // ตรวจสอบ Authentication
       if (typeof getCurrentUser === 'function') {
         const user = await getCurrentUser();
         if (!user) {
@@ -532,7 +756,7 @@
 
         const emailDisplay = document.getElementById('userEmailDisplay');
         if (emailDisplay && user.email) {
-          const username = user.email.split('@')[0];
+          const username = user.email.specical?.split('@')[0] || user.email.split('@')[0];
           emailDisplay.innerText = `คุณ ${username}`;
         }
       }
