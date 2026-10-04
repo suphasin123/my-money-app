@@ -66,6 +66,7 @@
       </div>
     </div>
 
+    <!-- การ์ด Net Worth แบบโมเดิร์น -->
     <div class="p-4 pb-2">
       <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-md">
         <p class="text-xs text-gray-400 mb-1">ความมั่งคั่งสุทธิ (NET WORTH)</p>
@@ -83,6 +84,7 @@
       </div>
     </div>
 
+    <!-- กล่องแจ้งเตือนสถานะ -->
     <div class="px-4 py-2">
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 shadow-sm">
         <div class="flex items-center justify-between mb-2">
@@ -99,90 +101,90 @@
       </div>
     </div>
 
+    <!-- ส่วน Dashboard ภาพรวม: ปรับเป็น Grid 2 คอลัมน์ ไม่ให้ซ้ำกับหน้า Accounts -->
     <div class="px-4 space-y-3 my-2">
-      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">ระบบจัดการการเงินของคุณ</h3>
+      <div class="flex justify-between items-center">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">ภาพรวมสินทรัพย์ & ทางลัด</h3>
+        <a href="accounts.html" class="text-xs text-blue-600 hover:underline font-medium">จัดการกระเป๋า <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+      </div>
 
-      <a href="accounts.html" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:border-blue-400 transition block">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <i class="fa-solid fa-money-bill-wave"></i>
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- เงินสดในมือ -->
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-emerald-300 hover:shadow transition flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-money-bill-wave"></i>
+            </div>
+            <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">เงินสด</span>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">เงินสดในมือ</p>
-            <p class="text-[11px] text-gray-400">จัดการกระเป๋าเงินสด</p>
+            <p class="text-[11px] text-gray-400">เงินสดในมือ</p>
+            <p id="cashTotalDisplay" class="text-sm font-bold text-gray-800">฿0</p>
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="cashTotalDisplay" class="font-bold text-gray-800">฿0</span>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
-        </div>
-      </a>
+        </a>
 
-      <a href="accounts.html" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:border-blue-400 transition block">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-            <i class="fa-solid fa-building-columns"></i>
+        <!-- บัญชีธนาคาร -->
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-blue-300 hover:shadow transition flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">ธนาคาร</span>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">บัญชีธนาคาร</p>
-            <p class="text-[11px] text-gray-400">เงินฝากและบัญชีออมทรัพย์</p>
+            <p class="text-[11px] text-gray-400">บัญชีธนาคาร</p>
+            <p id="bankTotalDisplay" class="text-sm font-bold text-gray-800">฿0</p>
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="bankTotalDisplay" class="font-bold text-gray-800">฿0</span>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
-        </div>
-      </a>
+        </a>
 
-      <a href="accounts.html" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:border-rose-400 transition block">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-            <i class="fa-solid fa-credit-card"></i>
+        <!-- บัตรเครดิต -->
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-rose-300 hover:shadow transition flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-credit-card"></i>
+            </div>
+            <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium">หนี้สิน</span>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">บัตรเครดิต</p>
-            <p class="text-[11px] text-gray-400">ยอดหนี้ค้างชำระและรอบบิล</p>
+            <p class="text-[11px] text-gray-400">บัตรเครดิต</p>
+            <p id="creditTotalDisplay" class="text-sm font-bold text-rose-500">฿0</p>
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="creditTotalDisplay" class="font-bold text-rose-500">฿0</span>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
-        </div>
-      </a>
+        </a>
 
-      <a href="accounts.html" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:border-purple-400 transition block">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-            <i class="fa-solid fa-chart-line"></i>
+        <!-- พอร์ตลงทุน -->
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-purple-300 hover:shadow transition flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium">ลงทุน</span>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">พอร์ตลงทุน</p>
-            <p class="text-[11px] text-gray-400">หุ้น, ทองคำ และกองทุน</p>
+            <p class="text-[11px] text-gray-400">พอร์ตลงทุน</p>
+            <p id="investmentTotalDisplay" class="text-sm font-bold text-purple-600">฿0</p>
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="investmentTotalDisplay" class="font-bold text-purple-600">฿0</span>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
-        </div>
-      </a>
+        </a>
+      </div>
 
-      <a href="goals.html" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:border-amber-400 transition block">
+      <!-- ทางลัดเป้าหมายแบบแถบยาวเต็มจอ -->
+      <a href="goals.html" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between hover:border-amber-300 hover:shadow transition block mt-2">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
             <i class="fa-solid fa-bullseye"></i>
           </div>
           <div>
-            <p class="text-sm font-semibold text-gray-700">เป้าหมาย & งบประมาณ</p>
+            <p class="text-xs font-bold text-gray-800">เป้าหมาย & งบประมาณ</p>
             <p class="text-[11px] text-gray-400">แผนออมเงินและจำกัดค่าใช้จ่าย</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <span id="goalsTotalDisplay" class="font-bold text-gray-800">฿0</span>
+          <span id="goalsTotalDisplay" class="font-bold text-gray-800 text-sm">฿0</span>
           <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
         </div>
       </a>
     </div>
 
+    <!-- Navigation Bar ด้านล่าง -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
       <a href="index.html" class="flex flex-col items-center text-blue-600">
         <i class="fa-solid fa-list-ul text-lg"></i>
@@ -201,6 +203,7 @@
       </a>
     </nav>
 
+    <!-- Modal เพิ่มรายการ (คงเดิมตามระบบเดิมของคุณ) -->
     <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform max-h-[90vh] overflow-y-auto">
         
@@ -762,7 +765,6 @@
 
       let cardName = document.getElementById('modalAccount') ? document.getElementById('modalAccount').value : '';
 
-      // แก้ไขตรงนี้: ให้ฟิลด์ category เก็บค่าหมวดหมู่จริง ๆ ที่ผู้ใช้เลือก
       let transactionData = {
         title: currentTransactionType === 'credit_card' ? `[${cardName}] ${description}${installmentInfo}` : description + installmentInfo,
         amount: amount,
@@ -805,7 +807,6 @@
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. เช็กสถานะ User
       if (typeof getCurrentUser === 'function') {
         const user = await getCurrentUser();
         if (!user) {
@@ -820,7 +821,6 @@
         }
       }
 
-      // 2. โหลดข้อมูลตามวันที่
       updateDateDisplay();
       loadDashboardData();
     });

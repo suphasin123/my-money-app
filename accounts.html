@@ -12,6 +12,11 @@
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
+    .dragging {
+      opacity: 0.4;
+      background: #eff6ff !important;
+      border-color: #3b82f6 !important;
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex justify-center items-start min-h-screen">
@@ -58,7 +63,7 @@
       </div>
     </div>
 
-    <div class="px-4 space-y-4 my-2" id="accountsListContainer">
+    <div class="px-4 space-y-3 my-2" id="accountsListContainer">
     </div>
 
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
@@ -119,7 +124,7 @@
         <div class="flex justify-between items-center mb-3 border-b pb-3">
           <div>
             <h3 class="font-bold text-base text-gray-800">จัดเรียงลำดับกระเป๋าเงิน</h3>
-            <p class="text-xs text-gray-400">เลือกประเภทและเลื่อนลำดับตามต้องการ</p>
+            <p class="text-xs text-gray-400">ใช้วิธี **คลิกค้างแล้วลาก** ขึ้น-ลงเพื่อสลับตำแหน่ง</p>
           </div>
           <button onclick="closeSortModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
             <i class="fa-solid fa-xmark"></i>
@@ -136,8 +141,7 @@
           </select>
         </div>
 
-        <div id="sortItemListContainer" class="overflow-y-auto space-y-2 pr-1 flex-1 my-2 min-h-[150px]">
-          <!-- รายการกระเป๋าสำหรับกดเลื่อน -->
+        <div id="sortItemListContainer" class="overflow-y-auto space-y-2.5 pr-1 flex-1 my-2 min-h-[150px]">
         </div>
 
         <button onclick="closeSortModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition mt-2">
@@ -203,6 +207,40 @@
   <script>
     let globalTransactions = [];
     let accountMapCache = {};
+
+    let collapsedGroups = {
+      CASH: true,
+      BANK: true,
+      CREDIT: true,
+      INVESTMENT: true
+    };
+
+    window.toggleGroupCollapse = function(groupKey) {
+      collapsedGroups[groupKey] = !collapsedGroups[groupKey];
+      loadAccountsData();
+    };
+
+    // ฟังก์ชันเปิด-ปิดเมนูจุดสามจุดของแต่ละบัญชี
+    window.toggleActionMenu = function(accountId, event) {
+      if (event) event.stopPropagation();
+      
+      // ปิดเมนูอื่นๆ ที่เปิดอยู่ก่อน
+      document.querySelectorAll('.action-menu-dropdown').forEach(el => {
+        if (el.id !== `menu-${accountId}`) el.classList.add('hidden');
+      });
+
+      const menu = document.getElementById(`menu-${accountId}`);
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+    };
+
+    // กดคลิกพื้นที่อื่นเพื่อปิดเมนู
+    window.addEventListener('click', () => {
+      document.querySelectorAll('.action-menu-dropdown').forEach(el => {
+        el.classList.add('hidden');
+      });
+    });
 
     function updateAccountForm() {
       const type = document.getElementById('accountTypeSelect').value;
@@ -297,7 +335,6 @@
       }
     }
 
-    // จัดการระบบเรียงลำดับผ่าน localStorage แยกตามหมวดหมู่
     function getCustomAccountOrder(groupKey) {
       try {
         let saved = localStorage.getItem(`krapao_order_${groupKey}`);
@@ -311,19 +348,6 @@
       try {
         localStorage.setItem(`krapao_order_${groupKey}`, JSON.stringify(orderArray));
       } catch(e) {}
-    }
-
-    function moveSortItem(groupKey, index, direction) {
-      let order = getCustomOrderNames(groupKey);
-      let targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= order.length) return;
-
-      let temp = order[index];
-      order[index] = order[targetIndex];
-      order[targetIndex] = temp;
-
-      saveCustomAccountOrder(groupKey, order);
-      renderSortList();
     }
 
     function getCustomOrderNames(groupKey) {
@@ -357,19 +381,61 @@
 
       names.forEach((name, idx) => {
         container.innerHTML += `
-          <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center justify-between">
-            <span class="text-xs font-semibold text-gray-700">${idx + 1}. ${name}</span>
-            <div class="flex items-center gap-1">
-              <button onclick="moveSortItem('${groupKey}', ${idx}, -1)" class="px-2.5 py-1 bg-white border border-gray-200 hover:bg-blue-50 text-gray-600 rounded-lg text-xs" ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}>
-                <i class="fa-solid fa-arrow-up"></i> ขึ้น
-              </button>
-              <button onclick="moveSortItem('${groupKey}', ${idx}, 1)" class="px-2.5 py-1 bg-white border border-gray-200 hover:bg-blue-50 text-gray-600 rounded-lg text-xs" ${idx === names.length - 1 ? 'opacity-40 cursor-not-allowed' : ''}>
-                ลง <i class="fa-solid fa-arrow-down"></i>
-              </button>
+          <div draggable="true" data-name="${name}" class="sort-item bg-white border border-gray-200 rounded-xl p-3.5 flex items-center justify-between cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-sm transition select-none">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-grip-vertical text-gray-300"></i>
+              <span class="text-xs font-semibold text-gray-700">${name}</span>
             </div>
+            <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md font-medium">ลำดับที่ ${idx + 1}</span>
           </div>
         `;
       });
+
+      initDragAndDrop(groupKey);
+    }
+
+    function initDragAndDrop(groupKey) {
+      const container = document.getElementById('sortItemListContainer');
+      const items = container.querySelectorAll('.sort-item');
+
+      items.forEach(item => {
+        item.addEventListener('dragstart', () => {
+          item.classList.add('dragging');
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          const currentItems = container.querySelectorAll('.sort-item');
+          let newOrder = Array.from(currentItems).map(el => el.getAttribute('data-name'));
+          saveCustomAccountOrder(groupKey, newOrder);
+          renderSortList();
+        });
+      });
+
+      container.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggingItem = container.querySelector('.dragging');
+        const afterElement = getDragAfterElement(container, e.clientY);
+        if (afterElement == null) {
+          container.appendChild(draggingItem);
+        } else {
+          container.insertBefore(draggingItem, afterElement);
+        }
+      });
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.sort-item:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function parseTransferInfo(titleText, defaultAccount = '') {
@@ -622,55 +688,78 @@
         }
       });
 
-      // จัดเรียงลำดับตามที่เซฟไว้ใน Modal จัดเรียง
       Object.keys(groups).forEach(key => {
         let orderedNames = getCustomOrderNames(key);
         groups[key].sort((a, b) => orderedNames.indexOf(a.title) - orderedNames.indexOf(b.title));
       });
 
-      function renderGroupHTML(title, items, iconClass, colorClass, isLiability = false) {
+      function renderGroupHTML(groupKey, title, items, iconClass, colorClass, isLiability = false) {
         if (items.length === 0) return '';
         
         let groupTotal = 0;
+        items.forEach(item => {
+          groupTotal += item.balance;
+        });
+
+        let isCollapsed = collapsedGroups[groupKey];
         let itemsHTML = '';
 
-        items.forEach(item => {
-          const amt = item.balance;
-          groupTotal += amt;
+        if (!isCollapsed) {
+          items.forEach(item => {
+            const amt = item.balance;
 
-          itemsHTML += `
-            <div onclick="openAccountHistory('${item.title}')" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between mt-2 cursor-pointer hover:border-blue-300 hover:shadow transition">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg ${colorClass.bg} ${colorClass.text} flex items-center justify-center">
+            itemsHTML += `
+              <div class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between mt-2 hover:border-blue-300 hover:shadow transition relative">
+                <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="openAccountHistory('${item.title}')">
+                  <div class="w-9 h-9 rounded-lg ${colorClass.bg} ${colorClass.text} flex items-center justify-center">
+                    <i class="fa-solid ${iconClass}"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-700">${item.title}</p>
+                    <p class="text-[11px] text-gray-400">${item.category}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-xs ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
+
+                  <!-- เปลี่ยนจากรูปดินสอ/ถังขยะ เป็นปุ่มเมนูจุดสามจุด (⋮) -->
+                  <div class="relative">
+                    <button onclick="toggleActionMenu('${item.id}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition" title="เมนูจัดการ">
+                      <i class="fa-solid fa-ellipsis-vertical text-xs"></i>
+                    </button>
+
+                    <!-- กล่องเมนูป๊อปอัป (แก้ไข / ลบ) -->
+                    <div id="menu-${item.id}" class="action-menu-dropdown hidden absolute right-0 mt-1 w-28 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-30 text-xs">
+                      <button onclick="openEditAccountModal('${item.id}', '${item.title}', '${item.type}', event)" class="w-full text-left px-3 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2">
+                        <i class="fa-solid fa-pen text-[10px]"></i> แก้ไข
+                      </button>
+                      <button onclick="removeAccount('${item.id}', event)" class="w-full text-left px-3 py-2 text-rose-500 hover:bg-rose-50 flex items-center gap-2">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i> ลบ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        return `
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-1">
+            <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleGroupCollapse('${groupKey}')">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg ${colorClass.bg} ${colorClass.text} flex items-center justify-center text-xs">
                   <i class="fa-solid ${iconClass}"></i>
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-gray-700">${item.title}</p>
-                  <p class="text-[11px] text-gray-400">${item.category}</p>
+                  <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">${title}</h3>
+                  <span class="text-[10px] text-gray-400">${items.length} บัญชี (คลิกเพื่อ${isCollapsed ? 'ดูรายการ' : 'ซ่อน'})</span>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-xs ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
-
-                <!-- ปุ่มแก้ไขข้อมูลกระเป๋า -->
-                <button onclick="openEditAccountModal('${item.id}', '${item.title}', '${item.type}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center transition" title="แก้ไขกระเป๋า">
-                  <i class="fa-solid fa-pen text-xs"></i>
-                </button>
-
-                <!-- ปุ่มลบ -->
-                <button onclick="removeAccount('${item.id}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition" title="ลบรายการ">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-bold ${groupTotal < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${groupTotal.toLocaleString()}</span>
+                <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} text-gray-400 text-xs transition-transform"></i>
               </div>
-            </div>
-          `;
-        });
-
-        return `
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">${title}</h3>
-              <span class="text-xs font-bold ${groupTotal < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${groupTotal.toLocaleString()}</span>
             </div>
             ${itemsHTML}
           </div>
@@ -678,10 +767,10 @@
       }
 
       let htmlContent = '';
-      htmlContent += renderGroupHTML('เงินสดในมือ', groups.CASH, 'fa-money-bill-wave', { bg: 'bg-emerald-50', text: 'text-emerald-600' });
-      htmlContent += renderGroupHTML('บัญชีธนาคาร', groups.BANK, 'fa-building-columns', { bg: 'bg-blue-50', text: 'text-blue-600' });
-      htmlContent += renderGroupHTML('บัตรเครดิต & หนี้สิน', groups.CREDIT, 'fa-credit-card', { bg: 'bg-rose-50', text: 'text-rose-600' }, true);
-      htmlContent += renderGroupHTML('พอร์ตลงทุน', groups.INVESTMENT, 'fa-chart-line', { bg: 'bg-purple-50', text: 'text-purple-600' });
+      htmlContent += renderGroupHTML('CASH', 'เงินสดในมือ', groups.CASH, 'fa-money-bill-wave', { bg: 'bg-emerald-50', text: 'text-emerald-600' });
+      htmlContent += renderGroupHTML('BANK', 'บัญชีธนาคาร', groups.BANK, 'fa-building-columns', { bg: 'bg-blue-50', text: 'text-blue-600' });
+      htmlContent += renderGroupHTML('CREDIT', 'บัตรเครดิต & หนี้สิน', groups.CREDIT, 'fa-credit-card', { bg: 'bg-rose-50', text: 'text-rose-600' }, true);
+      htmlContent += renderGroupHTML('INVESTMENT', 'พอร์ตลงทุน', groups.INVESTMENT, 'fa-chart-line', { bg: 'bg-purple-50', text: 'text-purple-600' });
 
       container.innerHTML = htmlContent || '<p class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูลบัญชี</p>';
 
@@ -691,7 +780,6 @@
       document.getElementById('totalLiabilitiesDisplay').innerText = `฿${totalLiabilities.toLocaleString()}`;
     }
 
-    // บันทึกเพิ่มบัญชีใหม่
     document.getElementById('accountForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -710,7 +798,6 @@
       }
     });
 
-    // บันทึกแก้ไขบัญชี (อัปเดต title และ type ในตาราง transactions ของ Supabase)
     document.getElementById('editAccountForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -756,7 +843,7 @@
 
         const emailDisplay = document.getElementById('userEmailDisplay');
         if (emailDisplay && user.email) {
-          const username = user.email.specical?.split('@')[0] || user.email.split('@')[0];
+          const username = user.email.split('@')[0];
           emailDisplay.innerText = `คุณ ${username}`;
         }
       }
