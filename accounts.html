@@ -12,11 +12,6 @@
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    .dragging {
-      opacity: 0.4;
-      background: #eff6ff !important;
-      border-color: #3b82f6 !important;
-    }
   </style>
 </head>
 <body class="bg-gray-100 flex justify-center items-start min-h-screen">
@@ -124,7 +119,7 @@
         <div class="flex justify-between items-center mb-3 border-b pb-3">
           <div>
             <h3 class="font-bold text-base text-gray-800">จัดเรียงลำดับกระเป๋าเงิน</h3>
-            <p class="text-xs text-gray-400">ใช้วิธี **คลิกค้างแล้วลาก** ขึ้น-ลงเพื่อสลับตำแหน่ง</p>
+            <p class="text-xs text-gray-400">กดปุ่มลูกศรขึ้น-ลงเพื่อสลับตำแหน่ง</p>
           </div>
           <button onclick="closeSortModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
             <i class="fa-solid fa-xmark"></i>
@@ -182,13 +177,13 @@
       </div>
     </div>
 
-    <!-- Modal ประวัติกระเป๋า -->
+    <!-- Modal ประวัติกระเป๋า (Statement) -->
     <div id="accountHistoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
         <div class="flex justify-between items-center mb-3 border-b pb-3">
           <div>
             <h3 id="modalAccountTitle" class="font-bold text-base text-gray-800">ประวัติกระเป๋า</h3>
-            <p id="modalAccountSubtitle" class="text-xs text-gray-400">รายการรับ-จ่ายย้อนหลัง</p>
+            <p id="modalAccountSubtitle" class="text-xs text-gray-400">Statement รายการเคลื่อนไหว</p>
           </div>
           <button onclick="closeAccountHistoryModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
             <i class="fa-solid fa-xmark"></i>
@@ -220,22 +215,17 @@
       loadAccountsData();
     };
 
-    // ฟังก์ชันเปิด-ปิดเมนูจุดสามจุดของแต่ละบัญชี
     window.toggleActionMenu = function(accountId, event) {
       if (event) event.stopPropagation();
-      
-      // ปิดเมนูอื่นๆ ที่เปิดอยู่ก่อน
       document.querySelectorAll('.action-menu-dropdown').forEach(el => {
         if (el.id !== `menu-${accountId}`) el.classList.add('hidden');
       });
-
       const menu = document.getElementById(`menu-${accountId}`);
       if (menu) {
         menu.classList.toggle('hidden');
       }
     };
 
-    // กดคลิกพื้นที่อื่นเพื่อปิดเมนู
     window.addEventListener('click', () => {
       document.querySelectorAll('.action-menu-dropdown').forEach(el => {
         el.classList.add('hidden');
@@ -368,6 +358,19 @@
       return result;
     }
 
+    function moveSortItem(groupKey, index, direction) {
+      let names = getCustomOrderNames(groupKey);
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= names.length) return;
+
+      const temp = names[index];
+      names[index] = names[targetIndex];
+      names[targetIndex] = temp;
+
+      saveCustomAccountOrder(groupKey, names);
+      renderSortList();
+    }
+
     function renderSortList() {
       const groupKey = document.getElementById('sortGroupSelect').value;
       const container = document.getElementById('sortItemListContainer');
@@ -380,62 +383,23 @@
       }
 
       names.forEach((name, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === names.length - 1;
+
         container.innerHTML += `
-          <div draggable="true" data-name="${name}" class="sort-item bg-white border border-gray-200 rounded-xl p-3.5 flex items-center justify-between cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-sm transition select-none">
-            <div class="flex items-center gap-3">
-              <i class="fa-solid fa-grip-vertical text-gray-300"></i>
-              <span class="text-xs font-semibold text-gray-700">${name}</span>
+          <div class="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between hover:border-blue-400 transition select-none">
+            <span class="text-xs font-semibold text-gray-700">${name}</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="moveSortItem('${groupKey}', ${idx}, -1)" ${isFirst ? 'disabled class="opacity-30 cursor-not-allowed w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400"' : 'class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center text-gray-600 transition"'}>
+                <i class="fa-solid fa-chevron-up text-xs"></i>
+              </button>
+              <button onclick="moveSortItem('${groupKey}', ${idx}, 1)" ${isLast ? 'disabled class="opacity-30 cursor-not-allowed w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400"' : 'class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center text-gray-600 transition"'}>
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+              </button>
             </div>
-            <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md font-medium">ลำดับที่ ${idx + 1}</span>
           </div>
         `;
       });
-
-      initDragAndDrop(groupKey);
-    }
-
-    function initDragAndDrop(groupKey) {
-      const container = document.getElementById('sortItemListContainer');
-      const items = container.querySelectorAll('.sort-item');
-
-      items.forEach(item => {
-        item.addEventListener('dragstart', () => {
-          item.classList.add('dragging');
-        });
-
-        item.addEventListener('dragend', () => {
-          item.classList.remove('dragging');
-          const currentItems = container.querySelectorAll('.sort-item');
-          let newOrder = Array.from(currentItems).map(el => el.getAttribute('data-name'));
-          saveCustomAccountOrder(groupKey, newOrder);
-          renderSortList();
-        });
-      });
-
-      container.addEventListener('dragover', e => {
-        e.preventDefault();
-        const draggingItem = container.querySelector('.dragging');
-        const afterElement = getDragAfterElement(container, e.clientY);
-        if (afterElement == null) {
-          container.appendChild(draggingItem);
-        } else {
-          container.insertBefore(draggingItem, afterElement);
-        }
-      });
-    }
-
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.sort-item:not(.dragging)')];
-
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function parseTransferInfo(titleText, defaultAccount = '') {
@@ -478,9 +442,10 @@
       return found ? found.type.toUpperCase() : '';
     }
 
+    // ฟังก์ชันแสดงประวัติแบบ Statement ธนาคาร พร้อมสรุปยอดรวมฝั่งเพิ่ม-ลด
     function openAccountHistory(accountName) {
       document.getElementById('modalAccountTitle').innerText = accountName;
-      document.getElementById('modalAccountSubtitle').innerText = 'ประวัติรายการรับ-จ่าย / โอนเงินย้อนหลัง';
+      document.getElementById('modalAccountSubtitle').innerText = 'Statement รายการเคลื่อนไหว & สรุปยอดแยกประเภท';
       
       const container = document.getElementById('modalTransactionList');
       container.innerHTML = '';
@@ -509,8 +474,61 @@
       if (filtered.length === 0) {
         container.innerHTML = '<p class="text-center text-gray-400 text-xs py-8">ยังไม่มีประวัติรายการในกระเป๋านี้</p>';
       } else {
-        filtered.sort((a, b) => new Date(b.created_at || b.date || 0) - new Date(a.created_at || a.date || 0));
+        // เรียงจากเก่าไปใหม่ เพื่อคำนวณ Running Balance
+        filtered.sort((a, b) => new Date(a.created_at || a.date || 0) - new Date(b.created_at || b.date || 0));
 
+        let runningBalance = 0;
+        let totalIn = 0;   // ยอดรวมฝั่งเพิ่ม
+        let totalOut = 0;  // ยอดรวมฝั่งลด
+        const isAccCredit = getAccountType(accountName, globalTransactions) === 'CREDIT';
+
+        // วนลูปคำนวณยอดรวมฝั่งเพิ่ม/ลดล่วงหน้า
+        filtered.forEach(item => {
+          const type = item.type ? item.type.toUpperCase() : '';
+          const amt = parseFloat(item.amount) || 0;
+          let netChange = 0;
+
+          if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
+            netChange = amt;
+          } else if (type === 'INCOME') {
+            netChange = amt;
+          } else if (type === 'EXPENSE' || type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
+            netChange = isAccCredit ? amt : -amt;
+          } else if (type === 'PAY_DEBT') {
+            const { fromAcc } = parsePayDebtInfo(item.title || '', item.category || '');
+            netChange = (fromAcc === accountName) ? -amt : amt;
+          } else if (type === 'TRANSFER') {
+            const { fromAcc } = parseTransferInfo(item.title || '', item.category || '');
+            netChange = (fromAcc === accountName) ? (isAccCredit ? amt : -amt) : (isAccCredit ? -amt : amt);
+          }
+
+          if (netChange > 0) totalIn += netChange;
+          else if (netChange < 0) totalOut += Math.abs(netChange);
+        });
+
+        // สร้างกล่องสรุปภาพรวม (Summary Box) ไว้ด้านบนสุด
+        let summaryHTML = `
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-3.5 mb-3 grid grid-cols-3 gap-2 text-center shadow-sm">
+            <div>
+              <p class="text-[10px] text-gray-400">ยอดรวมเพิ่ม (+)</p>
+              <p class="text-xs font-bold text-emerald-600 mt-0.5">฿${totalIn.toLocaleString()}</p>
+            </div>
+            <div class="border-x border-blue-200/60">
+              <p class="text-[10px] text-gray-400">ยอดรวมลด (-)</p>
+              <p class="text-xs font-bold text-rose-500 mt-0.5">฿${totalOut.toLocaleString()}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400">คงเหลือสุทธิ</p>
+              <p class="text-xs font-bold text-blue-700 mt-0.5">฿${(totalIn - totalOut).toLocaleString()}</p>
+            </div>
+          </div>
+          <div class="space-y-2.5" id="statementItemsList"></div>
+        `;
+        container.innerHTML = summaryHTML;
+
+        const listContainer = document.getElementById('statementItemsList');
+
+        // วนลูปแสดงรายการทีละบรรทัด
         filtered.forEach(item => {
           const type = item.type ? item.type.toUpperCase() : '';
           let badgeColor = 'bg-gray-100 text-gray-600';
@@ -518,22 +536,26 @@
           let amountColor = 'text-gray-800';
           let displayTitle = item.title;
           let subText = item.category || '';
+          let netChange = 0;
 
-          const isAccCredit = getAccountType(accountName, globalTransactions) === 'CREDIT';
+          const amt = parseFloat(item.amount) || 0;
 
           if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
             badgeColor = 'bg-blue-50 text-blue-600';
             sign = '+';
             amountColor = 'text-blue-600';
             subText = 'ยอดตั้งต้นบัญชี';
+            netChange = amt;
           } else if (type === 'INCOME') {
             badgeColor = 'bg-emerald-50 text-emerald-600';
             sign = '+';
             amountColor = 'text-emerald-600';
+            netChange = amt;
           } else if (type === 'EXPENSE' || type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
             badgeColor = 'bg-rose-50 text-rose-600';
             sign = '-';
             amountColor = 'text-rose-500';
+            netChange = isAccCredit ? amt : -amt;
           } else if (type === 'PAY_DEBT') {
             badgeColor = 'bg-purple-50 text-purple-600';
             const { fromAcc, toAcc } = parsePayDebtInfo(item.title || '', item.category || '');
@@ -542,10 +564,12 @@
               sign = '-';
               amountColor = 'text-rose-500';
               displayTitle = `ชำระหนี้ ${toAcc}`;
+              netChange = -amt;
             } else {
-              sign = '-';
+              sign = '+';
               amountColor = 'text-emerald-500';
               displayTitle = `รับชำระจาก ${fromAcc}`;
+              netChange = amt;
             }
           } else if (type === 'TRANSFER') {
             badgeColor = 'bg-amber-50 text-amber-600';
@@ -555,16 +579,18 @@
               sign = isAccCredit ? '+' : '-';
               amountColor = isAccCredit ? 'text-emerald-500' : 'text-rose-500';
               displayTitle = `โอนไป ${toAcc}`;
+              netChange = isAccCredit ? amt : -amt;
             } else {
               sign = isAccCredit ? '-' : '+';
-              amountColor = isAccCredit ? 'text-emerald-500' : 'text-emerald-500';
+              amountColor = isAccCredit ? 'text-rose-500' : 'text-emerald-500';
               displayTitle = `รับโอนจาก ${fromAcc}`;
+              netChange = isAccCredit ? -amt : amt;
             }
           }
 
-          const amt = parseFloat(item.amount) || 0;
+          runningBalance += netChange;
 
-          container.innerHTML += `
+          listContainer.innerHTML += `
             <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg ${badgeColor} flex items-center justify-center text-xs font-bold">
@@ -575,7 +601,10 @@
                   <p class="text-[10px] text-gray-400">${subText} • ${item.created_at ? new Date(item.created_at).toLocaleDateString('th-TH') : ''}</p>
                 </div>
               </div>
-              <span class="text-xs font-bold ${amountColor}">${sign}฿${amt.toLocaleString()}</span>
+              <div class="text-right">
+                <p class="text-xs font-bold ${amountColor}">${sign}฿${amt.toLocaleString()}</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">คงเหลือ ฿${runningBalance.toLocaleString()}</p>
+              </div>
             </div>
           `;
         });
@@ -722,13 +751,11 @@
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-xs ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
 
-                  <!-- เปลี่ยนจากรูปดินสอ/ถังขยะ เป็นปุ่มเมนูจุดสามจุด (⋮) -->
                   <div class="relative">
                     <button onclick="toggleActionMenu('${item.id}', event)" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 flex items-center justify-center transition" title="เมนูจัดการ">
                       <i class="fa-solid fa-ellipsis-vertical text-xs"></i>
                     </button>
 
-                    <!-- กล่องเมนูป๊อปอัป (แก้ไข / ลบ) -->
                     <div id="menu-${item.id}" class="action-menu-dropdown hidden absolute right-0 mt-1 w-28 bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-30 text-xs">
                       <button onclick="openEditAccountModal('${item.id}', '${item.title}', '${item.type}', event)" class="w-full text-left px-3 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2">
                         <i class="fa-solid fa-pen text-[10px]"></i> แก้ไข

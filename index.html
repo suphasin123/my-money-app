@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Krapao - Personal Finance</title>
+  <title>Krapao - Personal Finance Dashboard</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,12 +12,20 @@
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex justify-center items-start min-h-screen">
 
   <div class="w-full max-w-md bg-gray-50 min-h-screen pb-28 flex flex-col text-gray-800 shadow-xl relative">
 
+    <!-- Header -->
     <header class="flex items-center justify-between px-4 py-3 bg-white shadow-sm sticky top-0 z-40">
       <div class="flex items-center gap-2.5">
         <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-200">
@@ -29,15 +37,13 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 shadow-sm transition">
-          <i class="fa-solid fa-plus"></i> เพิ่มรายการ
-        </button>
         <button onclick="handleLogout()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-rose-50 text-gray-500 hover:text-rose-600 flex items-center justify-center text-xs transition" title="ออกจากระบบ">
           <i class="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
     </header>
 
+    <!-- Date Controller -->
     <div class="bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
       <div id="singleDateController" class="flex items-center justify-between mb-2">
         <button onclick="changeDate(-1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">
@@ -66,25 +72,29 @@
       </div>
     </div>
 
-    <!-- การ์ด Net Worth แบบโมเดิร์น -->
+    <!-- ส่วนที่ 1: สรุปกระแสเงินสด -->
     <div class="p-4 pb-2">
-      <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-md">
-        <p class="text-xs text-gray-400 mb-1">ความมั่งคั่งสุทธิ (NET WORTH)</p>
-        <h2 id="netWorthDisplay" class="text-2xl font-bold mb-3">฿0</h2>
-        <div class="flex justify-between border-t border-slate-700/60 pt-3 text-xs">
-          <div>
-            <span class="text-gray-400 block">สินทรัพย์รวม</span>
-            <span id="totalAssetsDisplay" class="font-semibold text-emerald-400">฿0</span>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+        <p class="text-xs text-gray-500 mb-1">สรุปการเงิน <span id="periodLabel" class="font-bold text-blue-600">วันนี้</span></p>
+        <div class="flex justify-between items-center mt-3">
+          <div class="w-1/2 border-r border-gray-100">
+            <p class="text-[11px] text-gray-400 mb-1">รายรับ</p>
+            <p id="periodIncome" class="text-lg font-bold text-emerald-500">฿0</p>
           </div>
-          <div class="text-right">
-            <span class="text-gray-400 block">หนี้สินรวม</span>
-            <span id="totalLiabilitiesDisplay" class="font-semibold text-rose-400">฿0</span>
+          <div class="w-1/2">
+            <p class="text-[11px] text-gray-400 mb-1">รายจ่าย</p>
+            <p id="periodExpense" class="text-lg font-bold text-rose-500">฿0</p>
           </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
+            <span class="text-gray-500">เงินคงเหลือ (กระแสเงินสด)</span>
+            <span id="periodBalance" class="font-bold text-gray-800 text-sm">฿0</span>
         </div>
       </div>
     </div>
 
-    <!-- กล่องแจ้งเตือนสถานะ -->
+    <!-- ส่วนที่ 2: แจ้งเตือนด่วน -->
     <div class="px-4 py-2">
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 shadow-sm">
         <div class="flex items-center justify-between mb-2">
@@ -95,102 +105,104 @@
         </div>
         <div id="alertBoxContent" class="space-y-2 text-xs">
           <div class="bg-white/80 p-2 rounded-xl flex justify-between items-center">
-            <span class="text-gray-700"><i class="fa-solid fa-credit-card text-rose-500 mr-1.5"></i> กำลังโหลดข้อมูล...</span>
+            <span class="text-gray-700"><i class="fa-solid fa-spinner fa-spin text-gray-400 mr-1.5"></i> กำลังโหลดข้อมูล...</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ส่วน Dashboard ภาพรวม: ปรับเป็น Grid 2 คอลัมน์ ไม่ให้ซ้ำกับหน้า Accounts -->
-    <div class="px-4 space-y-3 my-2">
-      <div class="flex justify-between items-center">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">ภาพรวมสินทรัพย์ & ทางลัด</h3>
-        <a href="accounts.html" class="text-xs text-blue-600 hover:underline font-medium">จัดการกระเป๋า <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+    <!-- ส่วนที่ 3: รายการด่วน (Quick Add) -->
+    <div class="px-4 py-2 mt-1">
+      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">รายการด่วน</h3>
+      <div class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
+          <button onclick="quickAdd('กาแฟ', 60, 'อาหาร')" class="flex-shrink-0 bg-white border border-amber-100 rounded-2xl p-3 flex flex-col items-center justify-center gap-1 min-w-[75px] shadow-sm hover:border-amber-300 transition">
+              <span class="text-xl">☕️</span>
+              <span class="text-[10px] text-gray-600 font-medium mt-1">กาแฟ</span>
+          </button>
+          <button onclick="quickAdd('อาหารกลางวัน', 80, 'อาหาร')" class="flex-shrink-0 bg-white border border-orange-100 rounded-2xl p-3 flex flex-col items-center justify-center gap-1 min-w-[75px] shadow-sm hover:border-orange-300 transition">
+              <span class="text-xl">🍜</span>
+              <span class="text-[10px] text-gray-600 font-medium mt-1">อาหาร</span>
+          </button>
+          <button onclick="quickAdd('รถไฟฟ้า', 45, 'เดินทาง')" class="flex-shrink-0 bg-white border border-blue-100 rounded-2xl p-3 flex flex-col items-center justify-center gap-1 min-w-[75px] shadow-sm hover:border-blue-300 transition">
+              <span class="text-xl">🚆</span>
+              <span class="text-[10px] text-gray-600 font-medium mt-1">เดินทาง</span>
+          </button>
+          <button onclick="quickAdd('ช้อปปิ้ง', '', 'ช้อปปิ้ง')" class="flex-shrink-0 bg-white border border-pink-100 rounded-2xl p-3 flex flex-col items-center justify-center gap-1 min-w-[75px] shadow-sm hover:border-pink-300 transition">
+              <span class="text-xl">🛍️</span>
+              <span class="text-[10px] text-gray-600 font-medium mt-1">ช้อปปิ้ง</span>
+          </button>
       </div>
+    </div>
 
+    <!-- ส่วนที่ 4: จัดการกระเป๋าเงิน & บัญชี (ลิงก์ไปหน้า accounts.html ตามคำขอ) -->
+    <div class="px-4 py-2 mt-1">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">กระเป๋าเงิน & บัญชี</h3>
+        <a href="accounts.html" class="text-[10px] text-blue-600 hover:underline font-medium">จัดการกระเป๋า <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
+      </div>
       <div class="grid grid-cols-2 gap-2.5">
-        <!-- เงินสดในมือ -->
-        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-emerald-300 hover:shadow transition flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-emerald-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
               <i class="fa-solid fa-money-bill-wave"></i>
             </div>
-            <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">เงินสด</span>
-          </div>
-          <div>
-            <p class="text-[11px] text-gray-400">เงินสดในมือ</p>
-            <p id="cashTotalDisplay" class="text-sm font-bold text-gray-800">฿0</p>
+            <div>
+              <p class="text-[10px] text-gray-400">เงินสด</p>
+              <p id="dashCash" class="text-xs font-bold text-gray-800">฿0</p>
+            </div>
           </div>
         </a>
-
-        <!-- บัญชีธนาคาร -->
-        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-blue-300 hover:shadow transition flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
+        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-blue-300 transition flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
               <i class="fa-solid fa-building-columns"></i>
             </div>
-            <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">ธนาคาร</span>
-          </div>
-          <div>
-            <p class="text-[11px] text-gray-400">บัญชีธนาคาร</p>
-            <p id="bankTotalDisplay" class="text-sm font-bold text-gray-800">฿0</p>
-          </div>
-        </a>
-
-        <!-- บัตรเครดิต -->
-        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-rose-300 hover:shadow transition flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
-              <i class="fa-solid fa-credit-card"></i>
+            <div>
+              <p class="text-[10px] text-gray-400">ธนาคาร</p>
+              <p id="dashBank" class="text-xs font-bold text-gray-800">฿0</p>
             </div>
-            <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-medium">หนี้สิน</span>
-          </div>
-          <div>
-            <p class="text-[11px] text-gray-400">บัตรเครดิต</p>
-            <p id="creditTotalDisplay" class="text-sm font-bold text-rose-500">฿0</p>
-          </div>
-        </a>
-
-        <!-- พอร์ตลงทุน -->
-        <a href="accounts.html" class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 hover:border-purple-300 hover:shadow transition flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
-              <i class="fa-solid fa-chart-line"></i>
-            </div>
-            <span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium">ลงทุน</span>
-          </div>
-          <div>
-            <p class="text-[11px] text-gray-400">พอร์ตลงทุน</p>
-            <p id="investmentTotalDisplay" class="text-sm font-bold text-purple-600">฿0</p>
           </div>
         </a>
       </div>
+    </div>
 
-      <!-- ทางลัดเป้าหมายแบบแถบยาวเต็มจอ -->
-      <a href="goals.html" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between hover:border-amber-300 hover:shadow transition block mt-2">
+    <!-- ส่วนที่ 5: รายการล่าสุด -->
+    <div class="px-4 py-2 mt-1 mb-4">
+      <div class="flex justify-between items-center mb-3">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">รายการล่าสุด</h3>
+          <a href="history.html" class="text-[10px] text-blue-600 hover:underline font-medium">ดูทั้งหมด <i class="fa-solid fa-chevron-right text-[8px]"></i></a>
+      </div>
+      <div id="recentTransactionsList" class="space-y-2.5">
+          <p class="text-xs text-center text-gray-400 py-4 bg-white rounded-xl border border-gray-100">กำลังโหลดรายการ...</p>
+      </div>
+      
+      <!-- ทางลัดเป้าหมาย -->
+      <a href="goals.html" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between hover:border-amber-300 transition block mt-3">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
             <i class="fa-solid fa-bullseye"></i>
           </div>
           <div>
             <p class="text-xs font-bold text-gray-800">เป้าหมาย & งบประมาณ</p>
-            <p class="text-[11px] text-gray-400">แผนออมเงินและจำกัดค่าใช้จ่าย</p>
+            <p class="text-[11px] text-gray-400">ติดตามแผนการเงินของคุณ</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span id="goalsTotalDisplay" class="font-bold text-gray-800 text-sm">฿0</span>
-          <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
-        </div>
+        <i class="fa-solid fa-arrow-right text-xs text-gray-300"></i>
       </a>
     </div>
+
+    <!-- ปุ่ม Floating Action Button (FAB) -->
+    <button onclick="openAddModal()" class="fixed bottom-20 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-600/40 flex items-center justify-center text-xl z-50 hover:bg-blue-700 transition transform hover:scale-105">
+      <i class="fa-solid fa-plus"></i>
+    </button>
 
     <!-- Navigation Bar ด้านล่าง -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
       <a href="index.html" class="flex flex-col items-center text-blue-600">
-        <i class="fa-solid fa-list-ul text-lg"></i>
+        <i class="fa-solid fa-house text-lg"></i>
       </a>
       <a href="history.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+        <i class="fa-solid fa-list-ul text-lg"></i>
       </a>
       <a href="analytics.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
         <i class="fa-solid fa-chart-pie text-lg"></i>
@@ -203,7 +215,7 @@
       </a>
     </nav>
 
-    <!-- Modal เพิ่มรายการ (คงเดิมตามระบบเดิมของคุณ) -->
+    <!-- Modal เพิ่มรายการ (จัดเรียงปุ่มครบถ้วน: รายจ่าย, รายรับ, บัตร/หนี้, โอนเงิน, ชำระหนี้) -->
     <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform max-h-[90vh] overflow-y-auto">
         
@@ -318,10 +330,36 @@
     let currentView = 'day'; 
     let currentTransactionType = 'expense';
 
+    function quickAdd(title, amount, category) {
+      openAddModal();
+      setTransactionType('expense');
+      
+      document.getElementById('modalDescription').value = title;
+      if(amount !== '') {
+          document.getElementById('modalAmount').value = amount;
+      } else {
+          document.getElementById('modalAmount').value = '';
+      }
+      
+      const catSelect = document.getElementById('modalCategorySelect');
+      let found = false;
+      for(let i=0; i<catSelect.options.length; i++) {
+          if(catSelect.options[i].value === category) {
+              catSelect.selectedIndex = i;
+              found = true;
+              break;
+          }
+      }
+      if(!found) {
+          catSelect.value = 'ADD_NEW';
+          checkCustomCategory(catSelect);
+          document.getElementById('modalCustomCategory').value = category;
+      }
+    }
+
     function parseTransferInfo(titleText, defaultAccount = '') {
       let fromAcc = defaultAccount;
       let toAcc = '';
-
       const matchFull = titleText.match(/โอนจาก\s+(.+?)\s+ไป\s+(.+?)(?:\s*\(|$)/);
       if (matchFull) {
         fromAcc = matchFull[1].trim();
@@ -335,12 +373,10 @@
     function parsePayDebtInfo(titleText, defaultCategory = '') {
       let fromAcc = '';
       let toAcc = defaultCategory;
-
       const matchPay = titleText.match(/ชำระหนี้\s+(.+?)\s+จาก/);
       if (matchPay) toAcc = matchPay[1].trim();
       const matchFrom = titleText.match(/จาก\s+(.+?)\s*(?:\(|$)/);
       if (matchFrom) fromAcc = matchFrom[1].trim();
-
       return { fromAcc, toAcc };
     }
 
@@ -387,7 +423,6 @@
     function populateCategoryDropdown() {
       const selectEl = document.getElementById('modalCategorySelect');
       if (!selectEl) return;
-
       const cats = getCategories();
       let html = '';
       cats.forEach(c => {
@@ -416,42 +451,35 @@
       const day = String(selectedDate.getDate()).padStart(2, '0');
       
       let displayText = '';
-      if (currentView === 'day') {
-        displayText = `${year}-${month}-${day}`;
-      } else if (currentView === 'month') {
-        displayText = `${year}-${month}`;
-      } else if (currentView === 'year') {
-        displayText = `${year}`;
-      }
+      if (currentView === 'day') displayText = `${year}-${month}-${day}`;
+      else if (currentView === 'month') displayText = `${year}-${month}`;
+      else if (currentView === 'year') displayText = `${year}`;
 
       document.getElementById('currentDateDisplay').innerText = displayText;
       document.getElementById('modalDateInput').value = `${year}-${month}-${day}`;
+      
+      let label = currentView === 'day' ? 'วันนี้' : currentView === 'month' ? 'เดือนนี้' : currentView === 'year' ? 'ปีนี้' : 'ทั้งหมด';
+      document.getElementById('periodLabel').innerText = label;
+
       loadDashboardData();
     }
 
     function changeDate(direction) {
-      if (currentView === 'day') {
-        selectedDate.setDate(selectedDate.getDate() + direction);
-      } else if (currentView === 'month') {
-        selectedDate.setMonth(selectedDate.getMonth() + direction);
-      } else if (currentView === 'year') {
-        selectedDate.setFullYear(selectedDate.getFullYear() + direction);
-      }
+      if (currentView === 'day') selectedDate.setDate(selectedDate.getDate() + direction);
+      else if (currentView === 'month') selectedDate.setMonth(selectedDate.getMonth() + direction);
+      else if (currentView === 'year') selectedDate.setFullYear(selectedDate.getFullYear() + direction);
       updateDateDisplay();
     }
 
     function switchView(viewType) {
       currentView = viewType;
-
       ['viewDay', 'viewMonth', 'viewYear', 'viewAll', 'viewCustom'].forEach(id => {
         let el = document.getElementById(id);
         if (el) el.className = "cursor-pointer hover:text-black pb-1";
       });
       
       let activeEl = document.getElementById('view' + viewType.charAt(0).toUpperCase() + viewType.slice(1));
-      if (activeEl) {
-        activeEl.className = "font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer";
-      }
+      if (activeEl) activeEl.className = "font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer";
 
       let singleController = document.getElementById('singleDateController');
       let customController = document.getElementById('customRangeController');
@@ -459,9 +487,11 @@
       if (viewType === 'custom') {
         singleController.classList.add('hidden');
         customController.classList.remove('hidden');
+        document.getElementById('periodLabel').innerText = 'ช่วงที่เลือก';
       } else if (viewType === 'all') {
         singleController.classList.add('hidden');
         customController.classList.add('hidden');
+        document.getElementById('periodLabel').innerText = 'ทั้งหมด';
       } else {
         singleController.classList.remove('hidden');
         customController.classList.add('hidden');
@@ -472,13 +502,11 @@
 
     function setTransactionType(type) {
       currentTransactionType = type;
-
       let btnExpense = document.getElementById('btnExpense');
       let btnIncome = document.getElementById('btnIncome');
       let btnCreditCard = document.getElementById('btnCreditCard');
       let btnTransfer = document.getElementById('btnTransfer');
       let btnPayDebt = document.getElementById('btnPayDebt');
-
       let singleWrapper = document.getElementById('singleAccountWrapper');
       let transferWrapper = document.getElementById('transferAccountWrapper');
       let payDebtWrapper = document.getElementById('payDebtWrapper');
@@ -489,7 +517,6 @@
       [btnExpense, btnIncome, btnCreditCard, btnTransfer, btnPayDebt].forEach(b => {
         if(b) b.className = "py-2 text-gray-500 transition";
       });
-
       if (creditOpts) creditOpts.classList.add('hidden');
 
       if (type === 'expense') {
@@ -541,7 +568,7 @@
       const payFromEl = document.getElementById('modalPayFromAccount');
       const payToCreditEl = document.getElementById('modalPayToCredit');
 
-      const transactions = await fetchTransactions();
+      const transactions = typeof fetchTransactions === 'function' ? await fetchTransactions() : [];
       const allAccounts = [];
       const bankAccounts = [];
       const creditAccounts = [];
@@ -564,11 +591,8 @@
       let creditHTML = creditList.map(c => `<option value="${c}">${c}</option>`).join('');
       let bankHTML = bankList.map(b => `<option value="${b}">${b}</option>`).join('');
 
-      if (filterMode === 'CREDIT_ONLY' && selectEl) {
-        selectEl.innerHTML = creditHTML;
-      } else if (selectEl) {
-        selectEl.innerHTML = optionsHTML;
-      }
+      if (filterMode === 'CREDIT_ONLY' && selectEl) selectEl.innerHTML = creditHTML;
+      else if (selectEl) selectEl.innerHTML = optionsHTML;
 
       if (fromEl) fromEl.innerHTML = optionsHTML;
       if (toEl) toEl.innerHTML = optionsHTML;
@@ -585,6 +609,7 @@
 
     function closeAddModal() {
       document.getElementById('addModal').classList.add('hidden');
+      document.getElementById('transactionForm').reset();
     }
 
     window.onclick = function(event) {
@@ -593,133 +618,115 @@
     }
 
     function handleLogout() {
-      if (typeof signOut === 'function') {
-        signOut();
-      } else {
-        window.location.href = 'login.html';
-      }
+      if (typeof signOut === 'function') signOut();
+      else window.location.href = 'login.html';
     }
 
     async function loadDashboardData() {
       if (typeof fetchTransactions !== 'function') return;
-      
       const transactions = await fetchTransactions();
       
-      let totalAssets = 0;
-      let totalLiabilities = 0;
+      let periodIncome = 0;
+      let periodExpense = 0;
       let cashTotal = 0;
       let bankTotal = 0;
-      let creditTotal = 0;
-      let investmentTotal = 0;
+      let totalCreditDebt = 0;
 
+      const y = selectedDate.getFullYear();
+      const m = selectedDate.getMonth();
+      const d = selectedDate.getDate();
+
+      let sortedTransactions = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       let accountMap = {};
 
       transactions.forEach(item => {
         const type = item.type ? item.type.toUpperCase() : '';
         const title = item.title || item.category || 'ทั่วไป';
         const amount = parseFloat(item.amount) || 0;
-
         if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
-          if (!accountMap[title]) {
-            accountMap[title] = { id: item.id, type: type, initialAmount: amount, balance: amount };
-          }
+          if (!accountMap[title]) accountMap[title] = { type: type, balance: amount };
         }
       });
 
       transactions.forEach(item => {
+        const itemDate = new Date(item.created_at);
+        const iy = itemDate.getFullYear();
+        const im = itemDate.getMonth();
+        const id = itemDate.getDate();
+
+        let inPeriod = false;
+        if (currentView === 'day' && iy === y && im === m && id === d) inPeriod = true;
+        else if (currentView === 'month' && iy === y && im === m) inPeriod = true;
+        else if (currentView === 'year' && iy === y) inPeriod = true;
+        else if (currentView === 'all') inPeriod = true;
+
         const type = item.type ? item.type.toUpperCase() : '';
         const amount = parseFloat(item.amount) || 0;
-        const targetAcc = item.category;
-        const titleText = item.title || '';
-
-        if (type === 'INCOME') {
-          if (accountMap[targetAcc]) accountMap[targetAcc].balance += amount;
-        } else if (type === 'EXPENSE') {
-          if (accountMap[targetAcc]) {
-            if (accountMap[targetAcc].type === 'CREDIT') {
-              accountMap[targetAcc].balance += amount; 
-            } else {
-              accountMap[targetAcc].balance -= amount; 
-            }
-          }
-        } else if (type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
-          const cardName = getCardNameFromTitle(titleText, targetAcc);
-          if (cardName && accountMap[cardName]) {
-            accountMap[cardName].balance += amount;
-          } else if (accountMap[targetAcc]) {
-            accountMap[targetAcc].balance += amount;
-          }
-        } else if (type === 'PAY_DEBT') {
-          const { fromAcc, toAcc } = parsePayDebtInfo(titleText, targetAcc);
-
-          if (accountMap[fromAcc]) {
-            accountMap[fromAcc].balance -= amount;
-          }
-          if (accountMap[toAcc]) {
-            accountMap[toAcc].balance -= amount;
-          } else if (accountMap[targetAcc]) {
-            accountMap[targetAcc].balance -= amount;
-          }
-        } else if (type === 'TRANSFER') {
-          const { fromAcc, toAcc } = parseTransferInfo(titleText, targetAcc);
-
-          if (accountMap[fromAcc]) {
-            if (accountMap[fromAcc].type === 'CREDIT') accountMap[fromAcc].balance += amount;
-            else accountMap[fromAcc].balance -= amount;
-          }
-          if (accountMap[toAcc]) {
-            if (accountMap[toAcc].type === 'CREDIT') accountMap[toAcc].balance -= amount;
-            else accountMap[toAcc].balance += amount;
-          }
+        
+        if (inPeriod) {
+            if (type === 'INCOME') periodIncome += amount;
+            else if (['EXPENSE', 'CREDIT_CARD', 'CREDIT_EXPENSE'].includes(type)) periodExpense += amount;
         }
       });
 
       Object.values(accountMap).forEach(acc => {
-        if (acc.type === 'CREDIT') {
-          const debt = Math.max(0, acc.balance);
-          totalLiabilities += debt;
-          creditTotal += debt;
-        } else {
-          totalAssets += acc.balance;
-          if (acc.type === 'CASH') cashTotal += acc.balance;
-          if (acc.type === 'BANK') bankTotal += acc.balance;
-          if (acc.type === 'INVESTMENT') investmentTotal += acc.balance;
-        }
+        if (acc.type === 'CASH') cashTotal += acc.balance;
+        if (acc.type === 'BANK') bankTotal += acc.balance;
+        if (acc.type === 'CREDIT') totalCreditDebt += Math.max(0, acc.balance);
       });
 
-      let goalsTotal = 0;
-      try {
-        const localGoals = localStorage.getItem('krapao_goals');
-        if (localGoals) {
-          const parsedGoals = JSON.parse(localGoals);
-          goalsTotal = parsedGoals.reduce((sum, g) => sum + (parseFloat(g.current) || 0), 0);
-        }
-      } catch(e) {}
-
-      let netWorth = totalAssets - totalLiabilities;
-
-      document.getElementById('netWorthDisplay').innerText = `฿${netWorth.toLocaleString()}`;
-      document.getElementById('totalAssetsDisplay').innerText = `฿${totalAssets.toLocaleString()}`;
-      document.getElementById('totalLiabilitiesDisplay').innerText = `฿${totalLiabilities.toLocaleString()}`;
-      document.getElementById('cashTotalDisplay').innerText = `฿${cashTotal.toLocaleString()}`;
-      document.getElementById('bankTotalDisplay').innerText = `฿${bankTotal.toLocaleString()}`;
-      document.getElementById('creditTotalDisplay').innerText = `฿${creditTotal.toLocaleString()}`;
-      document.getElementById('investmentTotalDisplay').innerText = `฿${investmentTotal.toLocaleString()}`;
+      document.getElementById('periodIncome').innerText = `฿${periodIncome.toLocaleString()}`;
+      document.getElementById('periodExpense').innerText = `฿${periodExpense.toLocaleString()}`;
+      document.getElementById('periodBalance').innerText = `฿${(periodIncome - periodExpense).toLocaleString()}`;
       
-      const goalsDisplay = document.getElementById('goalsTotalDisplay');
-      if (goalsDisplay) goalsDisplay.innerText = `฿${goalsTotal.toLocaleString()}`;
+      const dashCash = document.getElementById('dashCash');
+      const dashBank = document.getElementById('dashBank');
+      if(dashCash) dashCash.innerText = `฿${cashTotal.toLocaleString()}`;
+      if(dashBank) dashBank.innerText = `฿${bankTotal.toLocaleString()}`;
 
-      updateAlertBox(creditTotal);
+      updateAlertBox(totalCreditDebt); 
+
+      const recentList = document.getElementById('recentTransactionsList');
+      if (recentList) {
+          recentList.innerHTML = '';
+          const top3 = sortedTransactions.slice(0, 3);
+          
+          if (top3.length === 0) {
+              recentList.innerHTML = `<p class="text-xs text-center text-gray-400 py-4 bg-white rounded-xl border border-gray-100">ไม่มีรายการบัญชี</p>`;
+          } else {
+              top3.forEach(tx => {
+                  const type = tx.type ? tx.type.toUpperCase() : '';
+                  const isIncome = type === 'INCOME';
+                  const isTransfer = type === 'TRANSFER';
+                  const amtStr = isIncome ? `+฿${parseFloat(tx.amount).toLocaleString()}` : isTransfer ? `฿${parseFloat(tx.amount).toLocaleString()}` : `-฿${parseFloat(tx.amount).toLocaleString()}`;
+                  const colorCls = isIncome ? 'text-emerald-500' : isTransfer ? 'text-blue-500' : 'text-rose-500';
+                  
+                  recentList.innerHTML += `
+                      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center hover:border-gray-200 transition">
+                          <div class="flex items-center gap-3">
+                              <div class="w-9 h-9 rounded-full ${isIncome ? 'bg-emerald-50 text-emerald-500' : isTransfer ? 'bg-blue-50 text-blue-500' : 'bg-rose-50 text-rose-500'} flex items-center justify-center text-xs">
+                                  <i class="fa-solid ${isIncome ? 'fa-arrow-down' : isTransfer ? 'fa-right-left' : 'fa-arrow-up'}"></i>
+                              </div>
+                              <div>
+                                  <p class="text-xs font-bold text-gray-800">${tx.title || tx.category || 'ไม่มีชื่อรายการ'}</p>
+                                  <p class="text-[10px] text-gray-400 mt-0.5">${tx.category || 'ทั่วไป'} • ${new Date(tx.created_at).toLocaleDateString('th-TH')}</p>
+                              </div>
+                          </div>
+                          <span class="text-sm font-bold ${colorCls}">${amtStr}</span>
+                      </div>
+                  `;
+              });
+          }
+      }
     }
 
     function updateAlertBox(creditTotal) {
       const alertContent = document.getElementById('alertBoxContent');
       if (!alertContent) return;
-
       if (creditTotal > 0) {
         alertContent.innerHTML = `
           <div class="bg-white/80 p-2 rounded-xl flex justify-between items-center">
-            <span class="text-gray-700"><i class="fa-solid fa-credit-card text-rose-500 mr-1.5"></i> ยอดค้างชำระบัตรเครดิตทั้งหมด</span>
+            <span class="text-gray-700"><i class="fa-solid fa-credit-card text-rose-500 mr-1.5"></i> ยอดค้างชำระบัตรเครดิต</span>
             <span class="font-bold text-rose-600">฿${creditTotal.toLocaleString()}</span>
           </div>
         `;
@@ -735,7 +742,6 @@
 
     document.getElementById('transactionForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-
       const amount = parseFloat(document.getElementById('modalAmount').value) || 0;
       let description = document.getElementById('modalDescription').value;
       const customDate = document.getElementById('modalDateInput').value;
@@ -796,10 +802,7 @@
         );
 
         if (success) {
-          alert('บันทึกรายการสำเร็จ!');
           closeAddModal();
-          this.reset();
-          setTransactionType('expense');
           updateDateDisplay();
           loadDashboardData();
         }
@@ -813,14 +816,12 @@
           window.location.href = 'login.html';
           return;
         }
-
         const emailDisplay = document.getElementById('userEmailDisplay');
         if (emailDisplay && user.email) {
           const username = user.email.split('@')[0];
           emailDisplay.innerText = `คุณ ${username}`;
         }
       }
-
       updateDateDisplay();
       loadDashboardData();
     });
