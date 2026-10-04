@@ -24,29 +24,32 @@ async function renderGoalsView(container) {
         ${alertMessages.length > 0 ? `
             <div class="mb-6 space-y-2">
                 ${alertMessages.map(msg => `
-                    <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl flex items-center space-x-3 text-red-400">
-                        <i class="fa-solid fa-triangle-exclamation text-xl shrink-0"></i>
-                        <span class="text-sm font-semibold">${msg}</span>
+                    <div class="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center space-x-3 text-xs text-rose-700">
+                        <i class="fa-solid fa-triangle-exclamation text-base shrink-0 text-rose-600"></i>
+                        <span class="font-semibold">${msg}</span>
                     </div>
                 `).join('')}
             </div>
         ` : ''}
 
         <!-- หัวข้อหน้าจอ -->
-        <div class="mb-6 flex justify-between items-center">
-            <div>
-                <h2 class="text-2xl font-bold text-white flex items-center">
-                    <i class="fa-solid fa-bullseye mr-3 text-orange-500"></i>รายการเป้าหมาย & งบประมาณ
-                </h2>
-                <p class="text-sm text-gray-400 mt-1">ติดตามการออม คุมงบประมาณรายจ่าย และแจ้งเตือนอัตโนมัติเมื่อถึงเป้าหรือเกินงบ</p>
+        <div class="mb-6 flex justify-between items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-bullseye"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">รายการเป้าหมาย & งบประมาณ</h2>
+                    <p class="text-xs text-gray-400">ติดตามการออมและคุมงบประมาณรายจ่าย</p>
+                </div>
             </div>
-            <button onclick="openModal('GOAL')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-lg cursor-pointer flex items-center">
-                <i class="fa-solid fa-plus mr-2"></i> สร้างเป้าหมาย / งบประมาณ
+            <button onclick="openModal('GOAL')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-xl font-medium transition cursor-pointer flex items-center gap-1 shadow-sm">
+                <i class="fa-solid fa-plus"></i> สร้างเป้าหมาย
             </button>
         </div>
 
         <!-- รายการเป้าหมายทั้งหมด -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 gap-4 mb-6">
             ${goals.length > 0 ? goals.map(g => {
                 const percent = ((g.currentAmount / g.targetAmount) * 100).toFixed(1);
                 const isBudget = g.type === "BUDGET";
@@ -55,47 +58,51 @@ async function renderGoalsView(container) {
 
                 // กำหนดสีตามสถานะ
                 let barColor = isBudget ? "bg-orange-500" : "bg-indigo-500";
-                if (isOverBudget) barColor = "bg-red-500";
-                if (isGoalCompleted) barColor = "bg-green-500";
+                if (isOverBudget) barColor = "bg-rose-500";
+                if (isGoalCompleted) barColor = "bg-emerald-500";
 
-                const badgeColor = isBudget ? (isOverBudget ? "bg-red-500/20 text-red-400 border border-red-500/30" : "bg-orange-500/20 text-orange-400") : (isGoalCompleted ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-indigo-500/20 text-indigo-400");
+                const badgeColor = isBudget 
+                    ? (isOverBudget ? "bg-rose-50 text-rose-600 border border-rose-100" : "bg-orange-50 text-orange-600") 
+                    : (isGoalCompleted ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-indigo-50 text-indigo-600");
                 
                 const badgeText = isBudget 
-                    ? (isOverBudget ? "🚨 งบประมาณ (เกินงบแล้ว!)" : "📉 งบประมาณรายจ่าย (Budget)") 
-                    : (isGoalCompleted ? "🎯 เป้าหมายการออม (สำเร็จแล้ว!)" : "💰 เป้าหมายการออม (Project)");
+                    ? (isOverBudget ? "🚨 งบประมาณ (เกินงบแล้ว!)" : "📉 งบประมาณรายจ่าย") 
+                    : (isGoalCompleted ? "🎯 เป้าหมายการออม (สำเร็จแล้ว!)" : "💰 เป้าหมายการออม");
 
                 const label = isBudget ? "ใช้ไปแล้ว" : "เก็บได้แล้ว";
 
                 return `
-                    <div class="card-bg border ${isOverBudget ? 'border-red-500/60' : isGoalCompleted ? 'border-green-500/60' : 'border-gray-700/60'} p-6 rounded-2xl flex flex-col justify-between relative overflow-hidden transition">
+                    <div class="bg-white border ${isOverBudget ? 'border-rose-200' : isGoalCompleted ? 'border-emerald-200' : 'border-gray-100'} p-4 rounded-2xl shadow-sm flex flex-col justify-between relative transition">
                         <div>
-                            <div class="flex justify-between items-start mb-3">
+                            <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <span class="text-xs px-2.5 py-1 rounded-lg font-medium ${badgeColor} inline-block mb-2">${badgeText}</span>
-                                    <h4 class="text-lg font-bold text-white">${g.name}</h4>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${badgeColor} inline-block mb-1.5">${badgeText}</span>
+                                    <h4 class="text-sm font-semibold text-gray-800">${g.name}</h4>
                                 </div>
-                                <div class="bg-gray-900 p-2.5 rounded-xl border border-gray-700"><i class="fa-solid fa-bullseye text-orange-500"></i></div>
+                                <div class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-orange-500">
+                                    <i class="fa-solid fa-bullseye text-xs"></i>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="my-4">
-                            <div class="flex justify-between text-xs text-gray-400 mb-2">
-                                <span>${label} <strong class="${isOverBudget ? 'text-red-400' : isGoalCompleted ? 'text-green-400' : 'text-white'}">฿${g.currentAmount.toLocaleString()}</strong></span>
+                        <div class="my-3 text-xs">
+                            <div class="flex justify-between text-gray-400 mb-1.5">
+                                <span>${label} <strong class="${isOverBudget ? 'text-rose-600' : isGoalCompleted ? 'text-emerald-600' : 'text-gray-800'}">฿${g.currentAmount.toLocaleString()}</strong></span>
                                 <span>เป้าหมายสูงสุด: ฿${g.targetAmount.toLocaleString()} (${percent}%)</span>
                             </div>
-                            <div class="w-full bg-gray-800 rounded-full h-3 shadow-inner border border-gray-700/50 overflow-hidden">
-                                <div class="${barColor} h-full rounded-full transition-all duration-1000" style="width: ${Math.min(percent, 100)}%"></div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(percent, 100)}%"></div>
                             </div>
-                            ${isOverBudget ? `<p class="text-xs text-red-400 mt-1.5 font-semibold">⚠️ ใช้เกินงบไป ฿${(g.currentAmount - g.targetAmount).toLocaleString()}</p>` : ''}
-                            ${isGoalCompleted ? `<p class="text-xs text-green-400 mt-1.5 font-semibold">🎉 บรรลุเป้าหมายการออมเรียบร้อยแล้ว!</p>` : ''}
+                            ${isOverBudget ? `<p class="text-[10px] text-rose-600 mt-1 font-semibold">⚠️ ใช้เกินงบไป ฿${(g.currentAmount - g.targetAmount).toLocaleString()}</p>` : ''}
+                            ${isGoalCompleted ? `<p class="text-[10px] text-emerald-600 mt-1 font-semibold">🎉 บรรลุเป้าหมายการออมเรียบร้อยแล้ว!</p>` : ''}
                         </div>
 
-                        <button onclick="openAddGoalFundModal('${g.id}')" class="w-full bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 text-xs py-2.5 rounded-xl font-medium transition cursor-pointer flex items-center justify-center">
-                            <i class="fa-solid fa-plus-circle mr-1.5"></i> ทำรายการเพิ่มเติม / เติมเงิน
+                        <button onclick="openAddGoalFundModal('${g.id}')" class="w-full bg-orange-50 hover:bg-orange-100 text-orange-600 text-xs py-2 rounded-xl font-medium transition cursor-pointer flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-plus-circle"></i> ทำรายการเพิ่มเติม / เติมเงิน
                         </button>
                     </div>
                 `;
-            }).join('') : '<p class="text-gray-500">ยังไม่มีเป้าหมายในระบบ กดสร้างด้านบนได้เลย</p>'}
+            }).join('') : '<p class="text-gray-400 text-xs text-center py-4 bg-white rounded-2xl border border-gray-100 shadow-sm">ยังไม่มีเป้าหมายในระบบ กดสร้างด้านบนได้เลยครับ</p>'}
         </div>
     `;
 }
@@ -110,25 +117,27 @@ async function openAddGoalFundModal(goalId) {
     if (existingModal) existingModal.remove();
 
     const modalHtml = `
-        <div id="addGoalFundModal" class="fixed inset-0 bg-black/85 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div class="card-bg border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-white">จัดการเป้าหมาย: ${goal.title}</h3>
-                    <button onclick="document.getElementById('addGoalFundModal').remove()" class="text-gray-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div id="addGoalFundModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h3 class="font-bold text-lg text-gray-800">จัดการเป้าหมาย: ${goal.title}</h3>
+                    <button onclick="document.getElementById('addGoalFundModal').remove()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 cursor-pointer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
                 
-                <form onsubmit="submitGoalFund(event, '${goalId}')" class="space-y-4">
+                <form onsubmit="submitGoalFund(event, '${goalId}')" class="space-y-4 text-xs">
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">จำนวนเงิน (บาท)</label>
-                        <input type="number" id="goalFundAmount" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500" placeholder="0.00">
+                        <label class="block font-semibold text-gray-500 mb-1">จำนวนเงิน (บาท)</label>
+                        <input type="number" id="goalFundAmount" step="any" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500" placeholder="0.00">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">บันทึกช่วยจำ (Note)</label>
-                        <input type="text" id="goalFundNote" required class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-2.5 focus:outline-none focus:border-blue-500" placeholder="เช่น ออมเงินสะสม, เติมงบประมาณ">
+                        <label class="block font-semibold text-gray-500 mb-1">บันทึกช่วยจำ (Note)</label>
+                        <input type="text" id="goalFundNote" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500" placeholder="เช่น ออมเงินสะสม, เติมงบประมาณ">
                     </div>
-                    <div class="flex space-x-3 mt-6">
-                        <button type="button" onclick="document.getElementById('addGoalFundModal').remove()" class="w-1/2 bg-gray-700 text-white py-2.5 rounded-xl cursor-pointer">ยกเลิก</button>
-                        <button type="submit" class="w-1/2 bg-orange-600 text-white py-2.5 rounded-xl cursor-pointer font-bold">ยืนยัน</button>
+                    <div class="flex space-x-2 pt-2">
+                        <button type="button" onclick="document.getElementById('addGoalFundModal').remove()" class="w-1/2 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold transition cursor-pointer hover:bg-gray-200">ยกเลิก</button>
+                        <button type="submit" class="w-1/2 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold transition cursor-pointer shadow-md">ยืนยัน</button>
                     </div>
                 </form>
             </div>

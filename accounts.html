@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krapao - Accounts & Wallets</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen">
+
+  <div class="w-full max-w-md bg-gray-50 min-h-screen pb-28 flex flex-col text-gray-800 shadow-xl relative">
+
+    <header class="flex items-center justify-between px-4 py-3 bg-white shadow-sm sticky top-0 z-40">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+          <i class="fa-solid fa-wallet text-sm"></i>
+        </div>
+        <div>
+          <span class="font-bold text-sm text-gray-900 block leading-tight">กระเป๋าเงิน</span>
+          <span class="text-[10px] text-gray-400">คุณ Nop</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openAddAccountModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 shadow-sm transition">
+          <i class="fa-solid fa-plus"></i> เพิ่มบัญชี
+        </button>
+        <button onclick="handleLogout()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-rose-50 text-gray-500 hover:text-rose-600 flex items-center justify-center text-xs transition" title="ออกจากระบบ">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="p-4 pb-2">
+      <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-md">
+        <p class="text-xs text-gray-400 mb-1">ความมั่งคั่งสุทธิ (NET WORTH)</p>
+        <h2 id="netWorthDisplay" class="text-2xl font-bold mb-3">฿0</h2>
+        <div class="flex justify-between border-t border-slate-700/60 pt-3 text-xs">
+          <div>
+            <span class="text-gray-400 block">สินทรัพย์รวม</span>
+            <span id="totalAssetsDisplay" class="font-semibold text-emerald-400">฿0</span>
+          </div>
+          <div class="text-right">
+            <span class="text-gray-400 block">หนี้สินรวม</span>
+            <span id="totalLiabilitiesDisplay" class="font-semibold text-rose-400">฿0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-4 space-y-4 my-2" id="accountsListContainer">
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
+      <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-list-ul text-lg"></i>
+      </a>
+      <a href="history.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+      </a>
+      <a href="analytics.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-chart-pie text-lg"></i>
+      </a>
+      <a href="accounts.html" class="flex flex-col items-center text-blue-600">
+        <i class="fa-solid fa-wallet text-lg"></i>
+      </a>
+      <a href="goals.html" class="flex flex-col items-center text-gray-400 hover:text-gray-500 transition">
+        <i class="fa-solid fa-bullseye text-lg"></i>
+      </a>
+    </nav>
+
+    <div id="addAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 class="font-bold text-lg text-gray-800">เพิ่มบัญชีหรือกระเป๋าเงินใหม่</h3>
+          <button onclick="closeAddAccountModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="accountForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ประเภทบัญชี</label>
+            <select id="accountTypeSelect" onchange="updateAccountForm()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500">
+              <option value="CASH">เงินสด</option>
+              <option value="BANK">บัญชีธนาคาร</option>
+              <option value="CREDIT">บัตรเครดิต</option>
+              <option value="INVESTMENT">พอร์ตลงทุน</option>
+            </select>
+          </div>
+          <div>
+            <label id="accountNameLabel" class="block text-xs font-semibold text-gray-500 mb-1">ชื่อบัญชี</label>
+            <input type="text" id="accountNameInput" placeholder="เช่น กระเป๋าเงินสดหลัก" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500" required>
+          </div>
+          <div>
+            <label id="accountAmountLabel" class="block text-xs font-semibold text-gray-500 mb-1">ยอดเงินเริ่มต้น / ยอดหนี้ (บาท)</label>
+            <input type="number" id="accountAmountInput" placeholder="0.00" step="any" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-xl font-bold focus:outline-none focus:border-blue-500" required>
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition mt-4">
+            บันทึกบัญชีใหม่
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="accountHistoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
+        <div class="flex justify-between items-center mb-3 border-b pb-3">
+          <div>
+            <h3 id="modalAccountTitle" class="font-bold text-base text-gray-800">ประวัติกระเป๋า</h3>
+            <p id="modalAccountSubtitle" class="text-xs text-gray-400">รายการรับ-จ่ายย้อนหลัง</p>
+          </div>
+          <button onclick="closeAccountHistoryModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="modalTransactionList" class="overflow-y-auto space-y-2.5 pr-1 flex-1 my-2">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    let globalTransactions = [];
+
+    function updateAccountForm() {
+      const type = document.getElementById('accountTypeSelect').value;
+      const nameInput = document.getElementById('accountNameInput');
+      const nameLabel = document.getElementById('accountNameLabel');
+      const amountLabel = document.getElementById('accountAmountLabel');
+
+      if (type === 'CASH') {
+        nameLabel.innerText = "ชื่อกระเป๋าเงินสด";
+        nameInput.placeholder = "เช่น กระเป๋าพกพา, เงินสดติดตัว";
+        amountLabel.innerText = "ยอดเงินสดเริ่มต้น (บาท)";
+      } else if (type === 'BANK') {
+        nameLabel.innerText = "ชื่อธนาคาร / สาขา";
+        nameInput.placeholder = "เช่น KBank (ออมทรัพย์), SCB";
+        amountLabel.innerText = "ยอดเงินฝากคงเหลือ (บาท)";
+      } else if (type === 'CREDIT') {
+        nameLabel.innerText = "ชื่อบัตรเครดิต";
+        nameInput.placeholder = "เช่น KTC Visa, KBank Credit";
+        amountLabel.innerText = "ยอดหนี้ค้างชำระปัจจุบัน (บาท)";
+      } else if (type === 'INVESTMENT') {
+        nameLabel.innerText = "ชื่อสินทรัพย์ลงทุน";
+        nameInput.placeholder = "เช่น ทองคำแท่ง, กองทุน S&P500";
+        amountLabel.innerText = "มูลค่าพอร์ตลงทุนปัจจุบัน (บาท)";
+      }
+    }
+
+    function openAddAccountModal() {
+      updateAccountForm();
+      document.getElementById('addAccountModal').classList.remove('hidden');
+    }
+
+    function closeAddAccountModal() {
+      document.getElementById('addAccountModal').classList.add('hidden');
+    }
+
+    function closeAccountHistoryModal() {
+      document.getElementById('accountHistoryModal').classList.add('hidden');
+    }
+
+    window.onclick = function(event) {
+      let addModal = document.getElementById('addAccountModal');
+      let histModal = document.getElementById('accountHistoryModal');
+      if (event.target == addModal) closeAddAccountModal();
+      if (event.target == histModal) closeAccountHistoryModal();
+    }
+
+    function handleLogout() {
+      if (typeof signOut === 'function') {
+        signOut();
+      } else {
+        window.location.href = 'login.html';
+      }
+    }
+
+    async function removeAccount(id, event) {
+      if (event) event.stopPropagation();
+      if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        if (typeof deleteTransaction === 'function') {
+          const success = await deleteTransaction(id);
+          if (success) {
+            alert('ลบรายการสำเร็จ!');
+            loadAccountsData();
+          }
+        }
+      }
+    }
+
+    function parseTransferInfo(titleText, defaultAccount = '') {
+      let fromAcc = defaultAccount;
+      let toAcc = '';
+
+      const matchFull = titleText.match(/โอนจาก\s+(.+?)\s+ไป\s+(.+?)(?:\s*\(|$)/);
+      if (matchFull) {
+        fromAcc = matchFull[1].trim();
+        toAcc = matchFull[2].trim();
+      } else if (titleText.startsWith('โอนไป')) {
+        toAcc = titleText.replace('โอนไป', '').split('(')[0].trim();
+      }
+      return { fromAcc, toAcc };
+    }
+
+    function parsePayDebtInfo(titleText, defaultCategory = '') {
+      let fromAcc = '';
+      let toAcc = defaultCategory;
+
+      const matchPay = titleText.match(/ชำระหนี้\s+(.+?)\s+จาก/);
+      if (matchPay) toAcc = matchPay[1].trim();
+      const matchFrom = titleText.match(/จาก\s+(.+?)\s*(?:\(|$)/);
+      if (matchFrom) fromAcc = matchFrom[1].trim();
+
+      return { fromAcc, toAcc };
+    }
+
+    function getCardNameFromTitle(titleText, categoryText) {
+      if (!titleText) return categoryText || '';
+      const match = titleText.match(/\[(.+?)\]/);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+      return categoryText || '';
+    }
+
+    function getAccountType(accName, transactions) {
+      const found = transactions.find(t => (t.title || t.category) === accName && ['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes((t.type || '').toUpperCase()));
+      return found ? found.type.toUpperCase() : '';
+    }
+
+    function openAccountHistory(accountName) {
+      document.getElementById('modalAccountTitle').innerText = accountName;
+      document.getElementById('modalAccountSubtitle').innerText = 'ประวัติรายการรับ-จ่าย / โอนเงินย้อนหลัง';
+      
+      const container = document.getElementById('modalTransactionList');
+      container.innerHTML = '';
+
+      const filtered = globalTransactions.filter(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        const targetAcc = item.category;
+        const titleText = item.title || '';
+
+        if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
+          return item.title === accountName;
+        } else if (type === 'INCOME' || type === 'EXPENSE') {
+          return targetAcc === accountName;
+        } else if (type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
+          return titleText.includes(`[${accountName}]`) || targetAcc === accountName;
+        } else if (type === 'PAY_DEBT') {
+          const { fromAcc, toAcc } = parsePayDebtInfo(titleText, targetAcc);
+          return fromAcc === accountName || toAcc === accountName;
+        } else if (type === 'TRANSFER') {
+          const { fromAcc, toAcc } = parseTransferInfo(titleText, targetAcc);
+          return fromAcc === accountName || toAcc === accountName;
+        }
+        return false;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 text-xs py-8">ยังไม่มีประวัติรายการในกระเป๋านี้</p>';
+      } else {
+        filtered.sort((a, b) => new Date(b.created_at || b.date || 0) - new Date(a.created_at || a.date || 0));
+
+        filtered.forEach(item => {
+          const type = item.type ? item.type.toUpperCase() : '';
+          let badgeColor = 'bg-gray-100 text-gray-600';
+          let sign = '';
+          let amountColor = 'text-gray-800';
+          let displayTitle = item.title;
+          let subText = item.category || '';
+
+          const isAccCredit = getAccountType(accountName, globalTransactions) === 'CREDIT';
+
+          if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
+            badgeColor = 'bg-blue-50 text-blue-600';
+            sign = '+';
+            amountColor = 'text-blue-600';
+            subText = 'ยอดตั้งต้นบัญชี';
+          } else if (type === 'INCOME') {
+            badgeColor = 'bg-emerald-50 text-emerald-600';
+            sign = '+';
+            amountColor = 'text-emerald-600';
+          } else if (type === 'EXPENSE' || type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
+            badgeColor = 'bg-rose-50 text-rose-600';
+            sign = '-';
+            amountColor = 'text-rose-500';
+          } else if (type === 'PAY_DEBT') {
+            badgeColor = 'bg-purple-50 text-purple-600';
+            const { fromAcc, toAcc } = parsePayDebtInfo(item.title || '', item.category || '');
+
+            if (fromAcc === accountName) {
+              sign = '-';
+              amountColor = 'text-rose-500';
+              displayTitle = `ชำระหนี้ ${toAcc}`;
+            } else {
+              sign = '-';
+              amountColor = 'text-emerald-500';
+              displayTitle = `รับชำระจาก ${fromAcc}`;
+            }
+          } else if (type === 'TRANSFER') {
+            badgeColor = 'bg-amber-50 text-amber-600';
+            const { fromAcc, toAcc } = parseTransferInfo(item.title || '', item.category || '');
+
+            if (fromAcc === accountName) {
+              sign = isAccCredit ? '+' : '-';
+              amountColor = isAccCredit ? 'text-emerald-500' : 'text-rose-500';
+              displayTitle = `โอนไป ${toAcc}`;
+            } else {
+              sign = isAccCredit ? '-' : '+';
+              amountColor = isAccCredit ? 'text-emerald-500' : 'text-emerald-500';
+              displayTitle = `รับโอนจาก ${fromAcc}`;
+            }
+          }
+
+          const amt = parseFloat(item.amount) || 0;
+
+          container.innerHTML += `
+            <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg ${badgeColor} flex items-center justify-center text-xs font-bold">
+                  <i class="fa-solid ${type === 'INCOME' ? 'fa-arrow-down' : (type === 'EXPENSE' || type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') ? 'fa-arrow-up' : type === 'PAY_DEBT' ? 'fa-receipt' : type === 'TRANSFER' ? 'fa-right-left' : 'fa-wallet'}"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-gray-800">${displayTitle}</p>
+                  <p class="text-[10px] text-gray-400">${subText} • ${item.created_at ? new Date(item.created_at).toLocaleDateString('th-TH') : ''}</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold ${amountColor}">${sign}฿${amt.toLocaleString()}</span>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('accountHistoryModal').classList.remove('hidden');
+    }
+
+    async function loadAccountsData() {
+      if (typeof fetchTransactions !== 'function') return;
+
+      globalTransactions = await fetchTransactions();
+      const container = document.getElementById('accountsListContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      let accountMap = {};
+
+      globalTransactions.forEach(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        const title = item.title || item.category || 'ทั่วไป';
+
+        if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
+          if (!accountMap[title]) {
+            accountMap[title] = {
+              id: item.id,
+              title: title,
+              type: type,
+              balance: parseFloat(item.amount) || 0,
+              category: item.category || 'บัญชีหลัก'
+            };
+          }
+        }
+      });
+
+      globalTransactions.forEach(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        const amount = parseFloat(item.amount) || 0;
+        const targetAcc = item.category;
+        const titleText = item.title || '';
+
+        if (type === 'INCOME') {
+          if (accountMap[targetAcc]) {
+            accountMap[targetAcc].balance += amount;
+          }
+        } else if (type === 'EXPENSE') {
+          if (accountMap[targetAcc]) {
+            if (accountMap[targetAcc].type === 'CREDIT') {
+              accountMap[targetAcc].balance += amount; 
+            } else {
+              accountMap[targetAcc].balance -= amount; 
+            }
+          }
+        } else if (type === 'CREDIT_CARD' || type === 'CREDIT_EXPENSE') {
+          const cardName = getCardNameFromTitle(titleText, targetAcc);
+          if (cardName && accountMap[cardName]) {
+            accountMap[cardName].balance += amount; 
+          } else if (accountMap[targetAcc]) {
+            accountMap[targetAcc].balance += amount;
+          }
+        } else if (type === 'PAY_DEBT') {
+          const { fromAcc, toAcc } = parsePayDebtInfo(titleText, targetAcc);
+
+          if (accountMap[fromAcc]) accountMap[fromAcc].balance -= amount;
+          if (accountMap[toAcc]) {
+            accountMap[toAcc].balance -= amount; 
+          } else if (accountMap[targetAcc]) {
+            accountMap[targetAcc].balance -= amount;
+          }
+        } else if (type === 'TRANSFER') {
+          const { fromAcc, toAcc } = parseTransferInfo(titleText, targetAcc);
+
+          if (accountMap[fromAcc]) {
+            if (accountMap[fromAcc].type === 'CREDIT') accountMap[fromAcc].balance += amount; 
+            else accountMap[fromAcc].balance -= amount;
+          }
+
+          if (accountMap[toAcc]) {
+            if (accountMap[toAcc].type === 'CREDIT') accountMap[toAcc].balance -= amount; 
+            else accountMap[toAcc].balance += amount;
+          }
+        }
+      });
+
+      let totalAssets = 0;
+      let totalLiabilities = 0;
+
+      let groups = {
+        CASH: [],
+        BANK: [],
+        CREDIT: [],
+        INVESTMENT: []
+      };
+
+      Object.values(accountMap).forEach(acc => {
+        const type = acc.type;
+        if (groups[type]) {
+          groups[type].push(acc);
+        } else {
+          groups['CASH'].push(acc);
+        }
+
+        if (type === 'CREDIT') {
+          totalLiabilities += Math.abs(acc.balance);
+        } else {
+          totalAssets += acc.balance;
+        }
+      });
+
+      function renderGroupHTML(title, items, iconClass, colorClass, isLiability = false) {
+        if (items.length === 0) return '';
+        
+        let groupTotal = 0;
+        let itemsHTML = '';
+
+        items.forEach(item => {
+          const amt = item.balance;
+          groupTotal += amt;
+
+          itemsHTML += `
+            <div onclick="openAccountHistory('${item.title}')" class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between mt-2 cursor-pointer hover:border-blue-300 hover:shadow transition">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg ${colorClass.bg} ${colorClass.text} flex items-center justify-center">
+                  <i class="fa-solid ${iconClass}"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-700">${item.title}</p>
+                  <p class="text-[11px] text-gray-400">${item.category}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-bold ${amt < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${amt.toLocaleString()}</span>
+                <button onclick="removeAccount('${item.id}', event)" class="w-8 h-8 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition" title="ลบรายการ">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        return `
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">${title}</h3>
+              <span class="text-xs font-bold ${groupTotal < 0 || isLiability ? 'text-rose-500' : 'text-gray-800'}">฿${groupTotal.toLocaleString()}</span>
+            </div>
+            ${itemsHTML}
+          </div>
+        `;
+      }
+
+      let htmlContent = '';
+      htmlContent += renderGroupHTML('เงินสดในมือ', groups.CASH, 'fa-money-bill-wave', { bg: 'bg-emerald-50', text: 'text-emerald-600' });
+      htmlContent += renderGroupHTML('บัญชีธนาคาร', groups.BANK, 'fa-building-columns', { bg: 'bg-blue-50', text: 'text-blue-600' });
+      htmlContent += renderGroupHTML('บัตรเครดิต & หนี้สิน', groups.CREDIT, 'fa-credit-card', { bg: 'bg-rose-50', text: 'text-rose-600' }, true);
+      htmlContent += renderGroupHTML('พอร์ตลงทุน', groups.INVESTMENT, 'fa-chart-line', { bg: 'bg-purple-50', text: 'text-purple-600' });
+
+      container.innerHTML = htmlContent || '<p class="text-center text-gray-400 text-xs py-4">ยังไม่มีข้อมูลบัญชี</p>';
+
+      let netWorth = totalAssets - totalLiabilities;
+      document.getElementById('netWorthDisplay').innerText = `฿${netWorth.toLocaleString()}`;
+      document.getElementById('totalAssetsDisplay').innerText = `฿${totalAssets.toLocaleString()}`;
+      document.getElementById('totalLiabilitiesDisplay').innerText = `฿${totalLiabilities.toLocaleString()}`;
+    }
+
+    document.getElementById('accountForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const type = document.getElementById('accountTypeSelect').value;
+      const name = document.getElementById('accountNameInput').value;
+      const amount = parseFloat(document.getElementById('accountAmountInput').value) || 0;
+
+      if (typeof addTransaction === 'function') {
+        const success = await addTransaction(name, amount, type, 'บัญชีเริ่มต้น');
+        if (success) {
+          alert('เพิ่มบัญชีสำเร็จ!');
+          closeAddAccountModal();
+          this.reset();
+          loadAccountsData();
+        }
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAccountsData();
+    });
+  </script>
+</body>
+</html>

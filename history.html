@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krapao - Transaction History</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen">
+
+  <div class="w-full max-w-md bg-gray-50 min-h-screen pb-28 flex flex-col text-gray-800 shadow-xl relative">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-white shadow-sm sticky top-0 z-40">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+          <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+        </div>
+        <div>
+          <span class="font-bold text-sm text-gray-900 block leading-tight">ประวัติรายการ</span>
+          <span class="text-[10px] text-gray-400">ตรวจสอบย้อนหลัง</span>
+        </div>
+      </div>
+      <button onclick="handleLogout()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-rose-50 text-gray-500 hover:text-rose-600 flex items-center justify-center text-xs transition" title="ออกจากระบบ">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </header>
+
+    <!-- ตัวกรองช่วงเวลา -->
+    <div class="bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
+      <div id="singleDateController" class="flex items-center justify-between mb-2">
+        <button onclick="changeDate(-1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <div id="currentDateDisplay" class="bg-gray-100 px-4 py-1.5 rounded-full text-xs font-bold text-gray-700">
+          2026-10-04
+        </div>
+        <button onclick="changeDate(1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <div class="flex justify-between text-xs text-gray-500 pt-1 px-1">
+        <span onclick="switchView('day')" id="viewDay" class="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer">วัน</span>
+        <span onclick="switchView('month')" id="viewMonth" class="cursor-pointer hover:text-black pb-1">เดือน</span>
+        <span onclick="switchView('year')" id="viewYear" class="cursor-pointer hover:text-black pb-1">ปี</span>
+        <span onclick="switchView('all')" id="viewAll" class="cursor-pointer hover:text-black pb-1">ทั้งหมด</span>
+      </div>
+    </div>
+
+    <!-- รายการประวัติ -->
+    <div class="px-4 py-3 space-y-2.5" id="historyListContainer">
+      <!-- ข้อมูลจะถูกเติมอัตโนมัติ -->
+    </div>
+
+    <!-- แถบเมนูด้านล่าง -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
+      <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-list-ul text-lg"></i>
+      </a>
+      <a href="history.html" class="flex flex-col items-center text-blue-600">
+        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+      </a>
+      <a href="analytics.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-chart-pie text-lg"></i>
+      </a>
+      <a href="accounts.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-wallet text-lg"></i>
+      </a>
+      <a href="goals.html" class="flex flex-col items-center text-gray-400 hover:text-gray-500 transition">
+        <i class="fa-solid fa-bullseye text-lg"></i>
+      </a>
+    </nav>
+
+    <!-- POPUP MODAL สำหรับแก้ไขรายการ -->
+    <div id="editTransactionModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 class="font-bold text-lg text-gray-800">แก้ไขรายการ</h3>
+          <button type="button" onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="editTransactionForm" class="space-y-4">
+          <input type="hidden" id="editId">
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ประเภทรายการ</label>
+            <select id="editTypeSelect" onchange="onTypeChange()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white font-semibold focus:outline-none focus:border-blue-500">
+              <option value="INCOME">รายรับ</option>
+              <option value="EXPENSE">รายจ่าย</option>
+              <option value="TRANSFER">โอนเงินระหว่างกระเป๋า</option>
+            </select>
+          </div>
+
+          <div>
+            <label id="editTitleLabel" class="block text-xs font-semibold text-gray-500 mb-1">ชื่อรายการ / รายละเอียด</label>
+            <input type="text" id="editTitleInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500" required>
+          </div>
+
+          <!-- แสดงสำหรับ รายรับ และ รายจ่าย -->
+          <div id="singleAccountGroup">
+            <label id="editCategoryLabel" class="block text-xs font-semibold text-gray-500 mb-1">กระเป๋าเงิน</label>
+            <select id="editCategorySelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500">
+              <!-- รายชื่อกระเป๋าจะใส่แบบ Dynamic -->
+            </select>
+          </div>
+
+          <!-- แสดงเฉพาะกรณีเลือก โอนเงิน -->
+          <div id="transferAccountsGroup" class="hidden space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1">โอนออกจากกระเป๋า</label>
+              <select id="editFromAccountSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500">
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1">ไปยังกระเป๋า</label>
+              <select id="editToAccountSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500">
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">จำนวนเงิน (บาท)</label>
+            <input type="number" id="editAmountInput" step="any" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-xl font-bold focus:outline-none focus:border-blue-500" required>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition mt-4">
+            บันทึกการแก้ไขและอัปเดตระบบ
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    let selectedDate = new Date();
+    let currentView = 'day';
+    let globalTransactions = [];
+    let availableAccounts = [];
+
+    function updateDateDisplay() {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      
+      let displayText = '';
+      if (currentView === 'day') displayText = `${year}-${month}-${day}`;
+      else if (currentView === 'month') displayText = `${year}-${month}`;
+      else if (currentView === 'year') displayText = `${year}`;
+      else if (currentView === 'all') displayText = 'ทุกช่วงเวลา';
+
+      document.getElementById('currentDateDisplay').innerText = displayText;
+      loadHistoryData();
+    }
+
+    function changeDate(direction) {
+      if (currentView === 'day') selectedDate.setDate(selectedDate.getDate() + direction);
+      else if (currentView === 'month') selectedDate.setMonth(selectedDate.getMonth() + direction);
+      else if (currentView === 'year') selectedDate.setFullYear(selectedDate.getFullYear() + direction);
+      updateDateDisplay();
+    }
+
+    function switchView(viewType) {
+      currentView = viewType;
+      ['viewDay', 'viewMonth', 'viewYear', 'viewAll'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.className = "cursor-pointer hover:text-black pb-1";
+      });
+      document.getElementById('view' + viewType.charAt(0).toUpperCase() + viewType.slice(1)).className = "font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer";
+      
+      let singleController = document.getElementById('singleDateController');
+      if (viewType === 'all') singleController.classList.add('hidden');
+      else singleController.classList.remove('hidden');
+
+      updateDateDisplay();
+    }
+
+    function isWithinSelectedRange(itemDateStr) {
+      if (!itemDateStr || currentView === 'all') return true;
+      const itemDate = new Date(itemDateStr);
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      const day = selectedDate.getDate();
+
+      if (currentView === 'day') {
+        return itemDate.getFullYear() === year && itemDate.getMonth() === month && itemDate.getDate() === day;
+      } else if (currentView === 'month') {
+        return itemDate.getFullYear() === year && itemDate.getMonth() === month;
+      } else if (currentView === 'year') {
+        return itemDate.getFullYear() === year;
+      }
+      return true;
+    }
+
+    // สกัดหารายชื่อกระเป๋าที่มีทั้งหมดจากธุรกรรม
+    function populateAccountDropdowns() {
+      availableAccounts = [];
+      globalTransactions.forEach(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) {
+          const name = item.title || item.account;
+          if (name && !availableAccounts.includes(name)) {
+            availableAccounts.push(name);
+          }
+        }
+      });
+
+      if (availableAccounts.length === 0) {
+        availableAccounts = ['เงินสดในมือ', 'KBANK', 'SCB', 'KTC'];
+      }
+
+      const categorySelect = document.getElementById('editCategorySelect');
+      const fromSelect = document.getElementById('editFromAccountSelect');
+      const toSelect = document.getElementById('editToAccountSelect');
+
+      let optionsHTML = availableAccounts.map(acc => `<option value="${acc}">${acc}</option>`).join('');
+
+      categorySelect.innerHTML = optionsHTML;
+      fromSelect.innerHTML = optionsHTML;
+      toSelect.innerHTML = optionsHTML;
+    }
+
+    function onTypeChange() {
+      const type = document.getElementById('editTypeSelect').value;
+      const singleGroup = document.getElementById('singleAccountGroup');
+      const transferGroup = document.getElementById('transferAccountsGroup');
+      const titleLabel = document.getElementById('editTitleLabel');
+      const categoryLabel = document.getElementById('editCategoryLabel');
+
+      if (type === 'INCOME') {
+        singleGroup.classList.remove('hidden');
+        transferGroup.classList.add('hidden');
+        titleLabel.innerText = 'ชื่อรายรับ / แหล่งที่มา';
+        categoryLabel.innerText = 'กระเป๋าเงินที่รับเข้า';
+      } else if (type === 'EXPENSE') {
+        singleGroup.classList.remove('hidden');
+        transferGroup.classList.add('hidden');
+        titleLabel.innerText = 'ชื่อรายการใช้จ่าย';
+        categoryLabel.innerText = 'กระเป๋าเงินที่จ่ายออก';
+      } else if (type === 'TRANSFER') {
+        singleGroup.classList.add('hidden');
+        transferGroup.classList.remove('hidden');
+        titleLabel.innerText = 'บันทึกเพิ่มเติม (ถ้ามี)';
+      }
+    }
+
+    async function loadHistoryData() {
+      if (typeof fetchTransactions !== 'function') return;
+      globalTransactions = await fetchTransactions();
+      
+      populateAccountDropdowns();
+
+      const container = document.getElementById('historyListContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      const filtered = globalTransactions.filter(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        if (['CASH', 'BANK', 'CREDIT', 'INVESTMENT'].includes(type)) return false;
+        return isWithinSelectedRange(item.created_at || item.date);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white p-4 rounded-xl text-center text-xs text-gray-400 shadow-sm">ไม่มีประวัติรายการในช่วงเวลานี้</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const type = item.type ? item.type.toUpperCase() : '';
+        const amt = parseFloat(item.amount) || 0;
+        let badgeColor = 'text-gray-800';
+        let sign = '';
+        let icon = 'fa-receipt';
+        let bgIcon = 'bg-gray-50';
+
+        if (type === 'INCOME') {
+          badgeColor = 'text-emerald-600';
+          sign = '+';
+          icon = 'fa-arrow-trend-up';
+          bgIcon = 'bg-emerald-50';
+        } else if (type === 'EXPENSE') {
+          badgeColor = 'text-rose-600';
+          sign = '-';
+          icon = 'fa-arrow-trend-down';
+          bgIcon = 'bg-rose-50';
+        } else if (type === 'TRANSFER') {
+          badgeColor = 'text-blue-600';
+          sign = '';
+          icon = 'fa-right-left';
+          bgIcon = 'bg-blue-50';
+        }
+
+        const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+        container.innerHTML += `
+          <div class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center text-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl ${bgIcon} ${badgeColor} flex items-center justify-center font-bold">
+                <i class="fa-solid ${icon}"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-800">${item.title || 'รายการ'}</p>
+                <p class="text-[10px] text-gray-400">${item.category || type} • ${dateStr}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-sm ${badgeColor}">${sign}฿${amt.toLocaleString()}</span>
+              <div class="flex gap-1">
+                <button type="button" onclick="openEditModal('${item.id}')" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center transition" title="แก้ไข">
+                  <i class="fa-solid fa-pen text-[10px] pointer-events-none"></i>
+                </button>
+                <button type="button" onclick="handleDelete('${item.id}')" class="w-7 h-7 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition" title="ลบ">
+                  <i class="fa-solid fa-trash-can text-[10px] pointer-events-none"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function handleDelete(id) {
+      if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        if (typeof deleteTransaction === 'function') {
+          const success = await deleteTransaction(id);
+          if (success) {
+            alert('ลบรายการสำเร็จ!');
+            loadHistoryData();
+          } else {
+            alert('เกิดข้อผิดพลาดในการลบรายการ');
+          }
+        }
+      }
+    }
+
+    function openEditModal(id) {
+      const item = globalTransactions.find(t => t.id == id);
+      if (!item) {
+        alert('ไม่พบข้อมูลรายการนี้');
+        return;
+      }
+
+      document.getElementById('editId').value = item.id;
+      const type = (item.type || 'EXPENSE').toUpperCase();
+      document.getElementById('editTypeSelect').value = type;
+      
+      onTypeChange();
+
+      document.getElementById('editAmountInput').value = item.amount || '';
+
+      if (type === 'TRANSFER') {
+        const match = (item.title || '').match(/โอนจาก\s+(.+?)\s+ไป\s+(.+?)\s*\(/);
+        if (match) {
+          document.getElementById('editFromAccountSelect').value = match[1];
+          document.getElementById('editToAccountSelect').value = match[2];
+        }
+        document.getElementById('editTitleInput').value = item.category || 'โอนเงิน';
+      } else {
+        document.getElementById('editTitleInput').value = item.title || '';
+        document.getElementById('editCategorySelect').value = item.category || availableAccounts[0];
+      }
+
+      document.getElementById('editTransactionModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editTransactionModal').classList.add('hidden');
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('editTransactionModal');
+      if (event.target === modal) {
+        closeEditModal();
+      }
+    };
+
+    // บันทึกการแก้ไข: ลบข้อมูลเก่าที่ผิดออก แล้วสร้างข้อมูลใหม่ที่มีประเภทและกระเป๋าถูกต้อง
+    document.getElementById('editTransactionForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('editId').value;
+      const type = document.getElementById('editTypeSelect').value;
+      let title = document.getElementById('editTitleInput').value;
+      let category = document.getElementById('editCategorySelect').value;
+      const amount = parseFloat(document.getElementById('editAmountInput').value) || 0;
+
+      if (type === 'TRANSFER') {
+        const fromAcc = document.getElementById('editFromAccountSelect').value;
+        const toAcc = document.getElementById('editToAccountSelect').value;
+        
+        if (fromAcc === toAcc) {
+          alert('กระเป๋าเงินต้นทางและปลายทางต้องไม่เป็นใบเดียวกัน');
+          return;
+        }
+
+        title = `โอนจาก ${fromAcc} ไป ${toAcc} (${title || 'โอนเงิน'})`;
+        category = toAcc;
+      }
+
+      if (typeof deleteTransaction === 'function' && typeof addTransaction === 'function') {
+        const deleteSuccess = await deleteTransaction(id);
+        if (deleteSuccess) {
+          const addSuccess = await addTransaction(title, amount, type, category);
+          if (addSuccess) {
+            alert('แก้ไขและอัปเดตระบบสำเร็จ!');
+            closeEditModal();
+            loadHistoryData();
+          } else {
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูลใหม่');
+          }
+        } else {
+          alert('เกิดข้อผิดพลาดในการลบรายการเดิมเพื่อแก้ไข');
+        }
+      } else {
+        alert('ไม่พบฟังก์ชันจัดการฐานข้อมูล');
+      }
+    });
+
+    function handleLogout() {
+      window.location.href = 'login.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateDateDisplay();
+    });
+  </script>
+</body>
+</html>

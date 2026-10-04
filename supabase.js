@@ -1,27 +1,28 @@
-const SUPABASE_URL = 'https://ikwfevfzksurkiiuqdet.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_gLwKi76OAbw083XMwGDCCQ_i8pKSRl9';
+(function() {
+    const URL_VAL = 'https://ikwfevfzksurkiiuqdet.supabase.co';
+    const KEY_VAL = 'sb_publishable_gLwKi76OAbw083XMwGDCCQ_i8pKSRl9';
 
-// เปลี่ยนมาใช้ตัวแปรชื่อ db แทน จะได้ไม่ซ้ำกับระบบอื่น
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// โค้ดทดสอบการเชื่อมต่อ (ปิดจบตรงนี้ให้เรียบร้อย)
-db.from('_not_exists_table').select('*').then(({ error }) => {
-    if (error && error.code === 'PGRST116') {
+    // เช็คว่ามี window.supabase หรือยัง ถ้ามีให้สร้าง Client ทันที
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        window.dbClient = window.supabase.createClient(URL_VAL, KEY_VAL);
         console.log('✅ เชื่อมต่อกับ Supabase สำเร็จแล้ว!');
-    } else if (error) {
-        console.log('⚠️ เชื่อมต่อได้ แต่มีข้อความแจ้งเตือน:', error.message);
     } else {
-        console.log('✅ เชื่อมต่อกับ Supabase สำเร็จแล้ว!');
+        // ถ้าจังหวะแรกยังไม่มา ให้ดึงผ่านตัวแปรหลักโดยตรง
+        try {
+            window.dbClient = supabase.createClient(URL_VAL, KEY_VAL);
+            console.log('✅ เชื่อมต่อกับ Supabase สำเร็จแล้ว!');
+        } catch (e) {
+            console.error('❌ ไม่พบไลบรารี Supabase');
+        }
     }
-});
+})();
 
 // ==========================================
-// ฟังก์ชันจัดการข้อมูล Transactions กับ Supabase (วางไว้นอกวงเล็บทดสอบ)
+// ฟังก์ชันจัดการข้อมูล Transactions
 // ==========================================
-
-// 1. ฟังก์ชันดึงข้อมูลทั้งหมดของ user คนนั้นๆ
 async function fetchTransactions() {
-    const { data, error } = await db
+    if (!window.dbClient) return [];
+    const { data, error } = await window.dbClient
         .from('transactions')
         .select('*')
         .order('created_at', { ascending: false });
@@ -33,12 +34,20 @@ async function fetchTransactions() {
     return data;
 }
 
-// 2. ฟังก์ชันเพิ่มรายการใหม่ (รายรับ/รายจ่าย)
-async function addTransaction(title, amount, type) {
-    const { data, error } = await db
+async function addTransaction(name, amount, type, category = 'General') {
+    if (!window.dbClient) {
+        alert('ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase');
+        return false;
+    }
+    const { data, error } = await window.dbClient
         .from('transactions')
         .insert([
-            { title: title, amount: parseFloat(amount), type: type }
+            { 
+                title: name,           
+                amount: parseFloat(amount), 
+                type: type,            
+                category: category     
+            }
         ]);
 
     if (error) {
@@ -50,9 +59,10 @@ async function addTransaction(title, amount, type) {
     console.log('✅ บันทึกข้อมูลสำเร็จ!', data);
     return true;
 }
-// 3. ฟังก์ชันดึงข้อมูลเฉพาะประเภทที่ต้องการ (เช่น เฉพาะ BANK หรือ CREDIT)
+
 async function fetchTransactionsByType(type) {
-    const { data, error } = await db
+    if (!window.dbClient) return [];
+    const { data, error } = await window.dbClient
         .from('transactions')
         .select('*')
         .eq('type', type)
@@ -64,9 +74,10 @@ async function fetchTransactionsByType(type) {
     }
     return data;
 }
-// 4. ฟังก์ชันสำหรับลบรายการออกจากตาราง transactions ตาม ID
+
 async function deleteTransaction(id) {
-    const { error } = await db
+    if (!window.dbClient) return false;
+    const { error } = await window.dbClient
         .from('transactions')
         .delete()
         .eq('id', id);
@@ -76,13 +87,12 @@ async function deleteTransaction(id) {
         alert('ลบข้อมูลไม่สำเร็จ: ' + error.message);
         return false;
     }
-    
-    console.log('✅ ลบข้อมูลสำเร็จ!');
     return true;
 }
-// 5. ฟังก์ชันสำหรับแก้ไข/อัปเดตข้อมูลในตาราง transactions ตาม ID
+
 async function updateTransaction(id, updatedData) {
-    const { data, error } = await db
+    if (!window.dbClient) return false;
+    const { data, error } = await window.dbClient
         .from('transactions')
         .update(updatedData)
         .eq('id', id);
@@ -92,24 +102,26 @@ async function updateTransaction(id, updatedData) {
         alert('แก้ไขข้อมูลไม่สำเร็จ: ' + error.message);
         return false;
     }
-    
-    console.log('✅ แก้ไขข้อมูลสำเร็จ!', data);
     return true;
 }
-// 6. ฟังก์ชันสมัครสมาชิกด้วย Email / Password
+
+// ==========================================
+// ระบบจัดการผู้ใช้งาน (Auth) - อัปเดตใช้ window.dbClient
+// ==========================================
 async function signUp(email, password) {
-    const { data, error } = await db.auth.signUp({ email, password });
+    if (!window.dbClient) return false;
+    const { data, error } = await window.dbClient.auth.signUp({ email, password });
     if (error) {
         alert('สมัครสมาชิกไม่สำเร็จ: ' + error.message);
         return false;
     }
-    alert('สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน หรือเข้าสู่ระบบได้เลย');
+    alert('สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันตัวตน');
     return true;
 }
 
-// 7. ฟังก์ชันเข้าสู่ระบบด้วย Email / Password
 async function signIn(email, password) {
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (!window.dbClient) return false;
+    const { data, error } = await window.dbClient.auth.signInWithPassword({ email, password });
     if (error) {
         alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
         return false;
@@ -118,18 +130,22 @@ async function signIn(email, password) {
     return true;
 }
 
-// 8. ฟังก์ชันออกจากระบบ
 async function signOut() {
-    const { error } = await db.auth.signOut();
+    if (!window.dbClient) return;
+    const { error } = await window.dbClient.auth.signOut();
     if (error) {
         console.error('❌ ออกจากระบบไม่สำเร็จ:', error.message);
         return;
     }
-    window.location.reload(); // รีเฟรชหน้าจอเพื่อกลับไปหน้า Login
+    window.location.reload();
 }
 
-// 9. ฟังก์ชันตรวจสอบผู้ใช้งานปัจจุบัน
 async function getCurrentUser() {
-    const { data: { session } } = await db.auth.getSession();
+    if (!window.dbClient) return null;
+    const { data: { session }, error } = await window.dbClient.auth.getSession();
+    if (error) {
+        console.error('❌ ดึง Session ไม่สำเร็จ:', error.message);
+        return null;
+    }
     return session ? session.user : null;
 }

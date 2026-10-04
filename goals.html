@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krapao - Goals & Budget</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen">
+
+  <div class="w-full max-w-md bg-gray-50 min-h-screen pb-28 flex flex-col text-gray-800 shadow-xl relative">
+
+    <header class="flex items-center justify-between px-4 py-3 bg-white shadow-sm sticky top-0 z-40">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+          <i class="fa-solid fa-bullseye text-sm"></i>
+        </div>
+        <div>
+          <span class="font-bold text-sm text-gray-900 block leading-tight">เป้าหมาย & งบประมาณ</span>
+          <span class="text-[10px] text-gray-400">คุณ Nop</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 shadow-sm transition">
+          <i class="fa-solid fa-plus"></i> เพิ่มรายการ
+        </button>
+        <button onclick="handleLogout()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-rose-50 text-gray-500 hover:text-rose-600 flex items-center justify-center text-xs transition" title="ออกจากระบบ">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ตัวกรองช่วงเวลา -->
+    <div class="bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <button onclick="changePeriod(-1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <div id="currentPeriodDisplay" class="bg-gray-100 px-4 py-1.5 rounded-full text-xs font-bold text-gray-700">
+          เดือนนี้ (ตุลาคม 2026)
+        </div>
+        <button onclick="changePeriod(1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <div class="flex justify-between text-[11px] text-gray-500 pt-1 px-1">
+        <span onclick="switchPeriodView('today')" id="periodToday" class="cursor-pointer hover:text-black pb-1">วันนี้</span>
+        <span onclick="switchPeriodView('month')" id="periodMonth" class="font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer">เดือนนี้</span>
+        <span onclick="switchPeriodView('lastMonth')" id="periodLastMonth" class="cursor-pointer hover:text-black pb-1">เดือนก่อน</span>
+        <span onclick="switchPeriodView('year')" id="periodYear" class="cursor-pointer hover:text-black pb-1">ปีนี้</span>
+        <span onclick="switchPeriodView('lastYear')" id="periodLastYear" class="cursor-pointer hover:text-black pb-1">ปีก่อน</span>
+        <span onclick="switchPeriodView('all')" id="periodAll" class="cursor-pointer hover:text-black pb-1">ทั้งหมด</span>
+      </div>
+    </div>
+
+    <!-- ส่วนควบคุมแท็บ -->
+    <div class="px-4 mt-3">
+      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-200 rounded-xl text-xs font-bold text-center">
+        <button onclick="switchGoalTab('saving')" id="tabSaving" class="py-2 bg-white rounded-lg shadow-sm text-blue-600 transition">เป้าหมายเงินออม</button>
+        <button onclick="switchGoalTab('budget')" id="tabBudget" class="py-2 text-gray-500 transition">งบประมาณรายจ่าย</button>
+      </div>
+    </div>
+
+    <div class="px-4 space-y-3 my-3">
+      <div id="savingSection" class="space-y-3"></div>
+      <div id="budgetSection" class="space-y-3 hidden"></div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-3 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
+      <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-list-ul text-lg"></i>
+      </a>
+      <a href="history.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+      </a>
+      <a href="analytics.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-chart-pie text-lg"></i>
+      </a>
+      <a href="accounts.html" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <i class="fa-solid fa-wallet text-lg"></i>
+      </a>
+      <a href="goals.html" class="flex flex-col items-center text-blue-600">
+        <i class="fa-solid fa-bullseye text-lg"></i>
+      </a>
+    </nav>
+
+    <!-- POPUP MODAL สำหรับเพิ่มรายการ -->
+    <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transform transition-transform">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 id="modalTitle" class="font-bold text-lg text-gray-800">เพิ่มรายการใหม่</h3>
+          <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="goalBudgetForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ประเภทรายการ</label>
+            <select id="formTypeSelect" onchange="updateFormFields()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500 font-medium">
+              <option value="saving">เป้าหมายเงินออม</option>
+              <option value="budget">ประมาณการงบประมาณรายจ่าย</option>
+            </select>
+          </div>
+
+          <div id="savingNameGroup">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">ชื่อเป้าหมาย</label>
+            <input type="text" id="inputName" placeholder="เช่น ทริปญี่ปุ่น, เงินสำรอง" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500">
+          </div>
+
+          <div id="budgetCategoryGroup" class="hidden">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">เลือกประเภทหมวดหมู่รายจ่าย</label>
+            <select id="budgetCategorySelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-blue-500 font-medium">
+            </select>
+          </div>
+
+          <div>
+            <label id="labelAmount" class="block text-xs font-semibold text-gray-500 mb-1">เป้าหมายยอดเงินรวม (บาท)</label>
+            <input type="number" id="inputTargetAmount" step="any" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-xl font-bold focus:outline-none focus:border-blue-500" required>
+          </div>
+
+          <div id="currentSavingGroup">
+            <label class="block text-xs font-semibold text-gray-500 mb-1">เงินเก็บสะสมเริ่มต้น (บาท)</label>
+            <input type="number" id="inputCurrentAmount" step="any" placeholder="0.00" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500" value="0">
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition mt-4">
+            บันทึกข้อมูล
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- POPUP MODAL สำหรับเติมเงินออม -->
+    <div id="addProgressModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl">
+        <h3 class="font-bold text-base text-gray-800 mb-2">อัปเดตเงินเก็บเป้าหมาย</h3>
+        <p id="progressGoalTitle" class="text-xs text-gray-400 mb-4"></p>
+        <form id="progressForm" class="space-y-3">
+          <input type="hidden" id="progressGoalId">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">จำนวนเงินที่ต้องการเพิ่ม (+)</label>
+            <input type="number" id="progressAmountInput" step="any" placeholder="0.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-lg font-bold focus:outline-none focus:border-blue-500" required>
+          </div>
+          <div class="flex gap-2 pt-2">
+            <button type="button" onclick="closeProgressModal()" class="w-1/2 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs">ยกเลิก</button>
+            <button type="submit" class="w-1/2 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-md">บันทึก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    let currentTab = 'saving';
+    let currentPeriod = 'month';
+    let periodDate = new Date();
+    let globalGoals = [];
+    let globalBudgets = [];
+    let globalTransactions = [];
+
+    const knownAccounts = ['SCB', 'KBANK', 'KTC', 'เงินสดในมือ', 'CASH', 'BANK', 'CREDIT', 'INVESTMENT'];
+
+    const defaultCategories = [
+      'อาหาร', 'ที่พัก', 'เดินทาง', 'ช้อปปิ้ง', 'ดูหนังฟังเพลง', 
+      'น้ำมัน', 'ค่าจ้าง', 'ชำระหนี้', 'ค่าโทรศัพท์', 'น้ำ', 'เบ็ดเตล็ด'
+    ];
+
+    const categoryIcons = {
+      'อาหาร': 'fa-utensils',
+      'ที่พัก': 'fa-hotel',
+      'เดินทาง': 'fa-car',
+      'น้ำมัน': 'fa-gas-pump',
+      'ช้อปปิ้ง': 'fa-bag-shopping',
+      'ดูหนังฟังเพลง': 'fa-film',
+      'ค่าโทรศัพท์': 'fa-mobile-screen-button',
+      'น้ำ': 'fa-droplet',
+      'ชำระหนี้': 'fa-receipt',
+      'ค่าจ้าง': 'fa-money-bill-wave',
+      'เบ็ดเตล็ด': 'fa-boxes-stacked'
+    };
+
+    function populateCategoryOptions() {
+      const select = document.getElementById('budgetCategorySelect');
+      if (!select) return;
+
+      let catSet = new Set(defaultCategories);
+      globalTransactions.forEach(t => {
+        let cat = getTxCategory(t);
+        if (cat) catSet.add(cat);
+      });
+
+      select.innerHTML = '';
+      catSet.forEach(cat => {
+        select.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
+    }
+
+    function switchGoalTab(type) {
+      currentTab = type;
+      let tabSaving = document.getElementById('tabSaving');
+      let tabBudget = document.getElementById('tabBudget');
+      let savingSec = document.getElementById('savingSection');
+      let budgetSec = document.getElementById('budgetSection');
+
+      if (type === 'saving') {
+        tabSaving.className = "py-2 bg-white rounded-lg shadow-sm text-blue-600 font-bold transition";
+        tabBudget.className = "py-2 text-gray-500 transition";
+        savingSec.classList.remove('hidden');
+        budgetSec.classList.add('hidden');
+      } else {
+        tabBudget.className = "py-2 bg-white rounded-lg shadow-sm text-blue-600 font-bold transition";
+        tabSaving.className = "py-2 text-gray-500 transition";
+        budgetSec.classList.remove('hidden');
+        savingSec.classList.add('hidden');
+      }
+      renderData();
+    }
+
+    function switchPeriodView(period) {
+      currentPeriod = period;
+      ['periodToday', 'periodMonth', 'periodLastMonth', 'periodYear', 'periodLastYear', 'periodAll'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.className = "cursor-pointer hover:text-black pb-1";
+      });
+      
+      const activeElId = 'period' + period.charAt(0).toUpperCase() + period.slice(1);
+      document.getElementById(activeElId).className = "font-bold text-blue-600 border-b-2 border-blue-600 pb-1 cursor-pointer";
+      
+      updatePeriodDisplay();
+    }
+
+    function updatePeriodDisplay() {
+      const year = periodDate.getFullYear();
+      const month = periodDate.getMonth();
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+      let text = '';
+      if (currentPeriod === 'today') {
+        text = `วันนี้ (${periodDate.toLocaleDateString('th-TH')})`;
+      } else if (currentPeriod === 'month') {
+        text = `เดือนนี้ (${thaiMonths[month]} ${year + 543})`;
+      } else if (currentPeriod === 'lastMonth') {
+        let lastM = month === 0 ? 11 : month - 1;
+        let lastY = month === 0 ? year - 1 : year;
+        text = `เดือนก่อน (${thaiMonths[lastM]} ${lastY + 543})`;
+      } else if (currentPeriod === 'year') {
+        text = `ปีนี้ (${year + 543})`;
+      } else if (currentPeriod === 'lastYear') {
+        text = `ปีก่อน (${year + 543 - 1})`;
+      } else if (currentPeriod === 'all') {
+        text = 'ทุกช่วงเวลา';
+      }
+
+      document.getElementById('currentPeriodDisplay').innerText = text;
+      renderData();
+    }
+
+    function changePeriod(direction) {
+      if (currentPeriod === 'today') {
+        periodDate.setDate(periodDate.getDate() + direction);
+      } else if (currentPeriod === 'month' || currentPeriod === 'lastMonth') {
+        periodDate.setMonth(periodDate.getMonth() + direction);
+      } else if (currentPeriod === 'year' || currentPeriod === 'lastYear') {
+        periodDate.setFullYear(periodDate.getFullYear() + direction);
+      }
+      updatePeriodDisplay();
+    }
+
+    function isDateInPeriod(dateStr) {
+      if (!dateStr || currentPeriod === 'all') return true;
+      const d = new Date(dateStr);
+      const targetYear = periodDate.getFullYear();
+      const targetMonth = periodDate.getMonth();
+
+      if (currentPeriod === 'today') {
+        return d.getFullYear() === targetYear && d.getMonth() === targetMonth && d.getDate() === periodDate.getDate();
+      } else if (currentPeriod === 'month') {
+        return d.getFullYear() === targetYear && d.getMonth() === targetMonth;
+      } else if (currentPeriod === 'lastMonth') {
+        let lDate = new Date(targetYear, targetMonth - 1, 1);
+        return d.getFullYear() === lDate.getFullYear() && d.getMonth() === lDate.getMonth();
+      } else if (currentPeriod === 'year') {
+        return d.getFullYear() === targetYear;
+      } else if (currentPeriod === 'lastYear') {
+        return d.getFullYear() === targetYear - 1;
+      }
+      return true;
+    }
+
+    function openAddModal() {
+      populateCategoryOptions();
+      const formType = document.getElementById('formTypeSelect');
+      if (currentTab === 'budget') {
+        formType.value = 'budget';
+      } else {
+        formType.value = 'saving';
+      }
+      updateFormFields();
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function updateFormFields() {
+      const type = document.getElementById('formTypeSelect').value;
+      const savingGroup = document.getElementById('savingNameGroup');
+      const budgetGroup = document.getElementById('budgetCategoryGroup');
+      const labelAmount = document.getElementById('labelAmount');
+      const currentGroup = document.getElementById('currentSavingGroup');
+
+      if (type === 'saving') {
+        savingGroup.classList.remove('hidden');
+        budgetGroup.classList.add('hidden');
+        labelAmount.innerText = "เป้าหมายยอดเงินรวม (บาท)";
+        currentGroup.classList.remove('hidden');
+      } else {
+        savingGroup.classList.add('hidden');
+        budgetGroup.classList.remove('hidden');
+        labelAmount.innerText = "งบประมาณสูงสุด (บาท)";
+        currentGroup.classList.add('hidden');
+      }
+    }
+
+    function openProgressModal(id, title, current) {
+      document.getElementById('progressGoalId').value = id;
+      document.getElementById('progressGoalTitle').innerText = `เป้าหมาย: ${title} (เก็บแล้วปัจจุบัน ฿${current.toLocaleString()})`;
+      document.getElementById('progressAmountInput').value = '';
+      document.getElementById('addProgressModal').classList.remove('hidden');
+    }
+
+    function closeProgressModal() {
+      document.getElementById('addProgressModal').classList.add('hidden');
+    }
+
+    function getTxCategory(tx) {
+      let rawCat = tx.category || '';
+      let title = tx.title || '';
+
+      if (!rawCat || knownAccounts.includes(rawCat)) {
+        let cleanTitle = title.replace(/\(ผ่อน.*?\)/g, '').trim().split('(')[0].trim();
+        return cleanTitle || 'เบ็ดเตล็ด';
+      }
+      return rawCat;
+    }
+
+    function isCategoryMatching(budCategory, txCategory, txTitle) {
+      const bud = budCategory.toLowerCase();
+      const txCat = txCategory.toLowerCase();
+      const title = (txTitle || '').toLowerCase();
+
+      if (bud === txCat) return true;
+      if (txCat.includes(bud) || bud.includes(txCat)) return true;
+
+      if (bud === 'อาหาร' && (txCat.includes('ข้าว') || title.includes('ข้าว') || title.includes('หมูกรอบ'))) return true;
+      if (bud === 'เดินทาง' && (txCat.includes('น้ำมัน') || title.includes('น้ำมัน') || title.includes('ตั๋ว'))) return true;
+      if (bud === 'ที่พัก' && (txCat.includes('โรงแรม') || title.includes('โรงแรม') || title.includes('ห้องพัก'))) return true;
+
+      return false;
+    }
+
+    async function loadData() {
+      if (typeof fetchTransactions === 'function') {
+        globalTransactions = await fetchTransactions();
+      }
+
+      try {
+        const localGoals = localStorage.getItem('krapao_goals');
+        globalGoals = localGoals ? JSON.parse(localGoals) : [
+          { id: '1', title: 'ทริปญี่ปุ่น 2026', target: 30000, current: 19500, icon: 'fa-plane', color: 'amber' },
+          { id: '2', title: 'กองทุนฉุกเฉิน 3 เดือน', target: 50000, current: 20000, icon: 'fa-shield-halved', color: 'emerald' }
+        ];
+
+        const localBudgets = localStorage.getItem('krapao_budgets');
+        globalBudgets = localBudgets ? JSON.parse(localBudgets) : [
+          { id: 'b1', name: 'อาหาร', category: 'อาหาร', limit: 10000 },
+          { id: 'b2', name: 'เดินทาง', category: 'เดินทาง', limit: 10000 }
+        ];
+      } catch (e) {
+        globalGoals = [];
+        globalBudgets = [];
+      }
+
+      populateCategoryOptions();
+      renderData();
+    }
+
+    function renderData() {
+      // 1. เรนเดอร์เป้าหมายเงินออม
+      const savingContainer = document.getElementById('savingSection');
+      if (savingContainer) {
+        savingContainer.innerHTML = '';
+        if (globalGoals.length === 0) {
+          savingContainer.innerHTML = `<div class="bg-white p-4 rounded-xl text-center text-xs text-gray-400 shadow-sm">ยังไม่มีเป้าหมายเงินออม กดปุ่ม "เพิ่มรายการ" ด้านบน</div>`;
+        } else {
+          globalGoals.forEach(goal => {
+            const percent = Math.min(Math.round((goal.current / goal.target) * 100), 100);
+            const remaining = Math.max(goal.target - goal.current, 0);
+
+            savingContainer.innerHTML += `
+              <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                      <i class="fa-solid ${goal.icon || 'fa-bullseye'}"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-sm text-gray-800">${goal.title}</h4>
+                      <p class="text-[11px] text-gray-400">เป้าหมาย: ฿${goal.target.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">${percent}%</span>
+                    <button onclick="openProgressModal('${goal.id}', '${goal.title}', ${goal.current})" class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs" title="อัปเดตความคืบหน้า">
+                      <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button onclick="deleteGoal('${goal.id}')" class="w-7 h-7 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center text-xs" title="ลบเป้าหมาย">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden my-3">
+                  <div class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                  <span>เก็บแล้ว <strong class="text-gray-800">฿${goal.current.toLocaleString()}</strong></span>
+                  <span>คงเหลือ ฿${remaining.toLocaleString()}</span>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+
+      // 2. เรนเดอร์ประมาณการงบประมาณรายจ่าย (นับรวมยอดจาก เงินสด/เงินโอน/บัตรเครดิต)[cite: 27]
+      const budgetContainer = document.getElementById('budgetSection');
+      if (budgetContainer) {
+        budgetContainer.innerHTML = '';
+        if (globalBudgets.length === 0) {
+          budgetContainer.innerHTML = `<div class="bg-white p-4 rounded-xl text-center text-xs text-gray-400 shadow-sm">ยังไม่มีประมาณการงบประมาณรายจ่าย</div>`;
+        } else {
+          globalBudgets.forEach(bud => {
+            let spent = 0;
+            const targetCategory = bud.category || bud.name;
+
+            globalTransactions.forEach(t => {
+              const type = (t.type || '').toUpperCase();
+              const itemDate = t.date || t.created_at;
+
+              // นับรวมรายจ่ายทุกประเภท (EXPENSE, CREDIT_CARD, CREDIT_EXPENSE)[cite: 26, 27]
+              if (['EXPENSE', 'CREDIT_CARD', 'CREDIT_EXPENSE'].includes(type) && isDateInPeriod(itemDate)) {
+                const txCat = getTxCategory(t);
+                if (isCategoryMatching(targetCategory, txCat, t.title)) {
+                  spent += Math.abs(parseFloat(t.amount) || 0);
+                }
+              }
+            });
+
+            const limit = bud.limit || 1;
+            const percent = Math.min(Math.round((spent / limit) * 100), 100);
+            const remaining = limit - spent;
+            
+            const isOver = spent > limit;
+            const barColor = isOver ? 'bg-rose-500' : percent > 75 ? 'bg-orange-500' : 'bg-blue-500';
+            const textColor = isOver ? 'text-rose-600 font-bold' : 'text-blue-600 font-bold';
+            const catIcon = categoryIcons[targetCategory] || 'fa-wallet';
+
+            budgetContainer.innerHTML += `
+              <div class="bg-white rounded-2xl p-4 shadow-sm border ${isOver ? 'border-rose-300 bg-rose-50/30' : 'border-gray-100'} transition-all">
+                <div class="flex justify-between items-center mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl ${isOver ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-blue-600'} flex items-center justify-center text-sm">
+                      <i class="fa-solid ${catIcon}"></i>
+                    </div>
+                    <div>
+                      <span class="text-xs font-bold text-gray-800 block">${targetCategory}</span>
+                      ${isOver ? '<span class="text-[10px] text-rose-500 font-bold">⚠ เกินงบประมาณ</span>' : ''}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs ${textColor}">฿${spent.toLocaleString()} / ฿${limit.toLocaleString()}</span>
+                    <button onclick="deleteBudget('${bud.id}')" class="w-6 h-6 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 flex items-center justify-center text-[10px]" title="ลบงบประมาณ">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden my-2">
+                  <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                </div>
+                <p class="text-[11px] ${isOver ? 'text-rose-600 font-bold' : 'text-gray-400'} text-right">
+                  ${remaining >= 0 ? `เหลือใช้งานอีก ฿${remaining.toLocaleString()}` : `ใช้งบเกินไปแล้ว ฿${Math.abs(remaining).toLocaleString()}`}
+                </p>
+              </div>
+            `;
+          });
+        }
+      }
+    }
+
+    document.getElementById('goalBudgetForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const type = document.getElementById('formTypeSelect').value;
+
+      if (type === 'saving') {
+        const name = document.getElementById('inputName').value;
+        const target = parseFloat(document.getElementById('inputTargetAmount').value) || 0;
+        const current = parseFloat(document.getElementById('inputCurrentAmount').value) || 0;
+
+        const newGoal = { id: Date.now().toString(), title: name, target: target, current: current, icon: 'fa-piggy-bank', color: 'blue' };
+        globalGoals.push(newGoal);
+        localStorage.setItem('krapao_goals', JSON.stringify(globalGoals));
+      } else {
+        const selectedCat = document.getElementById('budgetCategorySelect').value;
+        const target = parseFloat(document.getElementById('inputTargetAmount').value) || 0;
+
+        const newBudget = { id: Date.now().toString(), name: selectedCat, category: selectedCat, limit: target };
+        globalBudgets.push(newBudget);
+        localStorage.setItem('krapao_budgets', JSON.stringify(globalBudgets));
+      }
+
+      alert('บันทึกข้อมูลสำเร็จ!');
+      closeAddModal();
+      this.reset();
+      renderData();
+    });
+
+    document.getElementById('progressForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('progressGoalId').value;
+      const val = parseFloat(document.getElementById('progressAmountInput').value) || 0;
+
+      globalGoals = globalGoals.map(g => {
+        if (g.id === id) {
+          g.current += val;
+        }
+        return g;
+      });
+
+      localStorage.setItem('krapao_goals', JSON.stringify(globalGoals));
+      alert('อัปเดตความคืบหน้าสำเร็จ!');
+      closeProgressModal();
+      renderData();
+    });
+
+    function deleteGoal(id) {
+      if (confirm('คุณต้องการลบเป้าหมายนี้ใช่หรือไม่?')) {
+        globalGoals = globalGoals.filter(g => g.id !== id);
+        localStorage.setItem('krapao_goals', JSON.stringify(globalGoals));
+        renderData();
+      }
+    }
+
+    function deleteBudget(id) {
+      if (confirm('คุณต้องการลบงบประมาณนี้ใช่หรือไม่?')) {
+        globalBudgets = globalBudgets.filter(b => b.id !== id);
+        localStorage.setItem('krapao_budgets', JSON.stringify(globalBudgets));
+        renderData();
+      }
+    }
+
+    function handleLogout() {
+      window.location.href = 'login.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updatePeriodDisplay();
+      loadData();
+    });
+  </script>
+</body>
+</html>

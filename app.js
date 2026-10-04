@@ -1,3 +1,6 @@
+// ==========================================
+// 1. ระบบจัดการแท็บและการแสดงผล (Tabs & Views)
+// ==========================================
 let currentTab = 'dashboard';
 
 function switchTab(tabName) {
@@ -17,17 +20,29 @@ function renderCurrentView() {
     const main = document.getElementById('mainContent');
     if (!main) return;
     main.innerHTML = '';
-    if (currentTab === 'dashboard') renderDashboardView(main);
-    else if (currentTab === 'cash') renderBankCashView(main, 'CASH', 'รายการเงินสด', 'fa-money-bill', 'text-green-500');
-    else if (currentTab === 'bank') renderBankView(main, 'BANK', 'รายการเงินฝากธนาคาร', 'fa-building-columns', 'text-blue-500');
-    else if (currentTab === 'credit') renderCreditCardView(main);
-    else if (currentTab === 'investment') renderInvestmentView(main);
-    else if (currentTab === 'goals') renderGoalsView(main);
+    
+    if (currentTab === 'dashboard' && typeof renderDashboardView === 'function') {
+        renderDashboardView(main);
+    } else if (currentTab === 'cash' && typeof renderBankCashView === 'function') {
+        renderBankCashView(main, 'CASH', 'รายการเงินสด', 'fa-money-bill', 'text-green-500');
+    } else if (currentTab === 'bank' && typeof renderBankView === 'function') {
+        renderBankView(main, 'BANK', 'รายการเงินฝากธนาคาร', 'fa-building-columns', 'text-blue-500');
+    } else if (currentTab === 'credit' && typeof renderCreditCardView === 'function') {
+        renderCreditCardView(main);
+    } else if (currentTab === 'investment' && typeof renderInvestmentView === 'function') {
+        renderInvestmentView(main);
+    } else if (currentTab === 'goals' && typeof renderGoalsView === 'function') {
+        renderGoalsView(main);
+    }
 }
 
-// ควบคุม Modal เพิ่มข้อมูลแบบ Dynamic แยกตามแต่ละระบบ
+// ==========================================
+// 2. ควบคุม Modal เพิ่มข้อมูลแบบ Dynamic
+// ==========================================
 function openModal(type) {
-    document.getElementById('modalType').value = type;
+    const modalTypeEl = document.getElementById('modalType');
+    if (modalTypeEl) modalTypeEl.value = type;
+
     const title = document.getElementById('accountModalTitle');
     const label1 = document.getElementById('labelText1');
     const label2 = document.getElementById('labelText2');
@@ -38,76 +53,102 @@ function openModal(type) {
     if(goalTypeWrapper) goalTypeWrapper.style.display = 'none';
 
     if(type === 'CASH') {
-        title.innerText = "เพิ่มกระเป๋าเงินสด";
-        document.getElementById('labelName').innerText = "ชื่อกระเป๋าเงินสด";
-        field1.style.display = 'none';
-        field2.style.display = 'none';
-        document.getElementById('labelAmount').innerText = "ยอดเงินเริ่มต้น (บาท)";
+        if(title) title.innerText = "เพิ่มกระเป๋าเงินสด";
+        if(document.getElementById('labelName')) document.getElementById('labelName').innerText = "ชื่อกระเป๋าเงินสด";
+        if(field1) field1.style.display = 'none';
+        if(field2) field2.style.display = 'none';
+        if(document.getElementById('labelAmount')) document.getElementById('labelAmount').innerText = "ยอดเงินเริ่มต้น (บาท)";
     } else if(type === 'BANK') {
-        title.innerText = "เพิ่มบัญชีธนาคาร";
-        document.getElementById('labelName').innerText = "ชื่อธนาคาร";
-        field1.style.display = 'block';
-        label1.innerText = "เลขที่บัญชี (4 ตัวท้าย)";
-        field2.style.display = 'none';
-        document.getElementById('labelAmount').innerText = "ยอดเงินเริ่มต้น (บาท)";
+        if(title) title.innerText = "เพิ่มบัญชีธนาคาร";
+        if(document.getElementById('labelName')) document.getElementById('labelName').innerText = "ชื่อธนาคาร";
+        if(field1) field1.style.display = 'block';
+        if(label1) label1.innerText = "เลขที่บัญชี (4 ตัวท้าย)";
+        if(field2) field2.style.display = 'none';
+        if(document.getElementById('labelAmount')) document.getElementById('labelAmount').innerText = "ยอดเงินเริ่มต้น (บาท)";
     } else if(type === 'CREDIT') {
-        title.innerText = "เพิ่มบัตรเครดิต";
-        document.getElementById('labelName').innerText = "ชื่อบัตรเครดิต";
-        field1.style.display = 'block';
-        label1.innerText = "วันสรุปยอด (วันที่ 1-31)";
-        field2.style.display = 'block';
-        label2.innerText = "วันครบกำหนดจ่าย (วันที่ 1-31)";
-        document.getElementById('labelAmount').innerText = "วงเงินรวมของบัตร (บาท)";
+        if(title) title.innerText = "เพิ่มบัตรเครดิต";
+        if(document.getElementById('labelName')) document.getElementById('labelName').innerText = "ชื่อบัตรเครดิต";
+        if(field1) field1.style.display = 'block';
+        if(label1) label1.innerText = "วันสรุปยอด (วันที่ 1-31)";
+        if(field2) field2.style.display = 'block';
+        if(label2) label2.innerText = "วันครบกำหนดจ่าย (วันที่ 1-31)";
+        if(document.getElementById('labelAmount')) document.getElementById('labelAmount').innerText = "วงเงินรวมของบัตร (บาท)";
     } else if(type === 'INVESTMENT') {
-        title.innerText = "เพิ่มพอร์ตลงทุน";
-        document.getElementById('labelName').innerText = "ชื่อพอร์ต / กองทุน";
-        field1.style.display = 'none';
-        field2.style.display = 'none';
-        document.getElementById('labelAmount').innerText = "มูลค่าเริ่มต้นพอร์ต (บาท)";
+        if(title) title.innerText = "เพิ่มพอร์ตลงทุน";
+        if(document.getElementById('labelName')) document.getElementById('labelName').innerText = "ชื่อพอร์ต / กองทุน";
+        if(field1) field1.style.display = 'none';
+        if(field2) field2.style.display = 'none';
+        if(document.getElementById('labelAmount')) document.getElementById('labelAmount').innerText = "มูลค่าเริ่มต้นพอร์ต (บาท)";
     } else if(type === 'GOAL') {
-        title.innerText = "สร้างเป้าหมาย / งบประมาณใหม่";
+        if(title) title.innerText = "สร้างเป้าหมาย / งบประมาณใหม่";
         if(goalTypeWrapper) goalTypeWrapper.style.display = 'block';
-        document.getElementById('labelName').innerText = "ชื่อเป้าหมาย / งบประมาณ";
-        field1.style.display = 'block';
-        label1.innerText = "เป้าหมายสูงสุด / วงเงินงบประมาณ (บาท)";
-        field2.style.display = 'none';
-        document.getElementById('labelAmount').innerText = "ยอดเงินสะสมเริ่มต้น (บาท)";
+        if(document.getElementById('labelName')) document.getElementById('labelName').innerText = "ชื่อเป้าหมาย / งบประมาณ";
+        if(field1) field1.style.display = 'block';
+        if(label1) label1.innerText = "เป้าหมายสูงสุด / วงเงินงบประมาณ (บาท)";
+        if(field2) field2.style.display = 'none';
+        if(document.getElementById('labelAmount')) document.getElementById('labelAmount').innerText = "ยอดเงินสะสมเริ่มต้น (บาท)";
     }
     
-    document.getElementById('accountModal').classList.remove('hidden');
+    const accountModal = document.getElementById('accountModal');
+    if(accountModal) accountModal.classList.remove('hidden');
 }
 
 function closeAccountModal() {
-    document.getElementById('accountModal').classList.add('hidden');
-    document.getElementById('accountForm').reset();
+    const accountModal = document.getElementById('accountModal');
+    if(accountModal) accountModal.classList.add('hidden');
+    
+    const accountForm = document.getElementById('accountForm');
+    if(accountForm) accountForm.reset();
 }
 
-// บันทึกข้อมูลที่เพิ่มจาก Modal กลาง (เชื่อมต่อกับ Supabase แล้ว)
 async function saveDynamicData(e) {
-    e.preventDefault();
-    const type = document.getElementById('modalType').value;
-    const name = document.getElementById('inputName').value;
-    const amount = parseFloat(document.getElementById('inputAmount').value);
+    if (e && e.preventDefault) e.preventDefault();
     
-    // ดึงค่าหมวดหมู่จาก Dropdown (ถ้ามี) ถ้าไม่มีให้ใช้ General
+    const typeField = document.getElementById('modalType');
+    const nameField = document.getElementById('inputName');
+    const amountField = document.getElementById('inputAmount');
+
+    if (!typeField || !nameField || !amountField) return;
+
+    const type = typeField.value;
+    const name = nameField.value;
+    const amount = parseFloat(amountField.value) || 0;
+    
     const categorySelect = document.getElementById('inputCategory');
     const category = categorySelect ? categorySelect.value : 'General';
 
-    // ส่งข้อมูลบันทึกเข้า Supabase (ยังคงใช้โครงสร้างเดิมเพื่อไม่ให้พัง)
-    const success = await addTransaction(name, amount, type, category);
+    const extra1 = document.getElementById('inputExtra1') ? parseInt(document.getElementById('inputExtra1').value) || 0 : null;
+    const extra2 = document.getElementById('inputExtra2') ? parseInt(document.getElementById('inputExtra2').value) || 0 : null;
+    const goalType = document.getElementById('inputGoalType') ? document.getElementById('inputGoalType').value : null;
 
-    if (success) {
+    let extraData = { category };
+    
+    if (type === 'CREDIT') {
+        extraData.limit = amount;
+        extraData.statement_date = extra1;
+        extraData.due_date = extra2;
+    } else if (type === 'GOAL') {
+        extraData.target_amount = extra1;
+        extraData.goal_type = goalType;
+    }
+
+    if (typeof addTransaction === 'function') {
+        const success = await addTransaction(name, amount, type, category, extraData);
+        if (success) {
+            closeAccountModal();
+            renderCurrentView();
+        }
+    } else {
+        console.warn("ยังไม่ได้ประกาศฟังก์ชัน addTransaction สำหรับบันทึกข้อมูลลง Supabase");
         closeAccountModal();
-        renderCurrentView();
     }
 }
 
-// ---------------------------------------------------------
-// ระบบตรวจสอบสถานะผู้ใช้งาน (Authentication Control)
-// ---------------------------------------------------------
+// ==========================================
+// 3. ระบบตรวจสอบสถานะผู้ใช้งาน (Auth & Session)
+// ==========================================
 let isSignUpMode = false;
 
-// สลับโหมดระหว่าง "เข้าสู่ระบบ" กับ "สมัครสมาชิก"
 function toggleAuthMode() {
     isSignUpMode = !isSignUpMode;
     const title = document.getElementById('authTitle');
@@ -115,55 +156,81 @@ function toggleAuthMode() {
     const toggleText = document.getElementById('authToggleText');
 
     if (isSignUpMode) {
-        title.innerText = "สร้างบัญชีผู้ใช้งานใหม่";
-        btn.innerText = "สมัครสมาชิก";
-        toggleText.innerText = "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ";
+        if(title) title.innerText = "สร้างบัญชีผู้ใช้งานใหม่";
+        if(btn) btn.innerText = "สมัครสมาชิก";
+        if(toggleText) toggleText.innerText = "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ";
     } else {
-        title.innerText = "กรุณาเข้าสู่ระบบเพื่อจัดการข้อมูลการเงินของคุณ";
-        btn.innerText = "เข้าสู่ระบบ";
-        toggleText.innerText = "ยังไม่มีบัญชีใช่หรือไม่? สมัครสมาชิก";
+        if(title) title.innerText = "กรุณาเข้าสู่ระบบเพื่อจัดการข้อมูลการเงินของคุณ";
+        if(btn) btn.innerText = "เข้าสู่ระบบ";
+        if(toggleText) toggleText.innerText = "ยังไม่มีบัญชีใช่หรือไม่? สมัครสมาชิก";
     }
 }
 
-// จัดการเมื่อกดปุ่ม Submit ในฟอร์ม Auth
 async function handleAuthSubmit(e) {
     e.preventDefault();
-    const email = document.getElementById('authEmail').value;
-    const password = document.getElementById('authPassword').value;
+    const emailInput = document.getElementById('authEmail');
+    const passwordInput = document.getElementById('authPassword');
+
+    if (!emailInput || !passwordInput) return;
+
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
     if (isSignUpMode) {
-        const success = await signUp(email, password);
-        if (success) toggleAuthMode(); // สลับกลับมาหน้า Login
+        if (typeof signUp === 'function') {
+            const success = await signUp(email, password);
+            if (success) toggleAuthMode();
+        }
     } else {
-        const success = await signIn(email, password);
-        if (success) {
-            const authModal = document.getElementById('authModal');
-            if (authModal) authModal.classList.add('hidden');
-            checkUserSession(); // ตรวจสอบ session และโหลดหน้าจอใหม่
+        if (typeof signIn === 'function') {
+            const success = await signIn(email, password);
+            if (success) {
+                const authModal = document.getElementById('authModal');
+                if (authModal) authModal.classList.add('hidden');
+                checkUserSession();
+            }
         }
     }
 }
 
-// ฟังก์ชันตรวจสอบตอนเปิดเว็บครั้งแรก
 async function checkUserSession() {
+    if (typeof getCurrentUser !== 'function') {
+        console.warn("ยังไม่ได้ประกาศฟังก์ชัน getCurrentUser ใน supabase.js");
+        return;
+    }
+
     const user = await getCurrentUser();
     const authModal = document.getElementById('authModal');
 
     if (!user) {
-        if (authModal) authModal.classList.remove('hidden'); // ถ้ายังไม่ล็อกอิน ให้แสดง Modal
+        if (authModal) authModal.classList.remove('hidden');
     } else {
-        if (authModal) authModal.classList.add('hidden'); // ถ้าล็อกอินแล้ว ซ่อน Modal
+        if (authModal) authModal.classList.add('hidden');
         console.log('👤 ผู้ใช้งานปัจจุบัน:', user.email);
         
-        // แสดงอีเมลที่ Sidebar ด้านซ้าย
         const emailDisplay = document.getElementById('userEmailDisplay');
         if (emailDisplay) emailDisplay.innerText = user.email;
 
-        renderCurrentView(); // โหลดหน้าเว็บหลักเมื่อผ่านการตรวจสอบ
+        renderCurrentView();
     }
 }
 
-// เริ่มต้นรันตรวจสอบผู้ใช้ทันทีที่เปิดเว็บ
+// ==========================================
+// 4. ระบบจัดการออกจากระบบ (Logout)
+// ==========================================
+function handleLogout() {
+    if (typeof db !== 'undefined' && db.auth) {
+        db.auth.signOut().then(() => {
+            window.location.href = 'login.html';
+        }).catch(err => {
+            console.error("Logout error:", err.message);
+            window.location.href = 'login.html';
+        });
+    } else {
+        window.location.href = 'login.html';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     checkUserSession();
 });
