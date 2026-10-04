@@ -25,7 +25,7 @@
         </div>
         <div>
           <span class="font-bold text-sm text-gray-900 block leading-tight">เป้าหมาย & งบประมาณ</span>
-          <span class="text-[10px] text-gray-400">คุณ Nop</span>
+          <span id="userEmailDisplay" class="text-[10px] text-gray-400">กำลังโหลด...</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -401,7 +401,6 @@
     }
 
     function renderData() {
-      // 1. เรนเดอร์เป้าหมายเงินออม
       const savingContainer = document.getElementById('savingSection');
       if (savingContainer) {
         savingContainer.innerHTML = '';
@@ -447,7 +446,6 @@
         }
       }
 
-      // 2. เรนเดอร์ประมาณการงบประมาณรายจ่าย (นับรวมยอดจาก เงินสด/เงินโอน/บัตรเครดิต)[cite: 27]
       const budgetContainer = document.getElementById('budgetSection');
       if (budgetContainer) {
         budgetContainer.innerHTML = '';
@@ -462,7 +460,6 @@
               const type = (t.type || '').toUpperCase();
               const itemDate = t.date || t.created_at;
 
-              // นับรวมรายจ่ายทุกประเภท (EXPENSE, CREDIT_CARD, CREDIT_EXPENSE)[cite: 26, 27]
               if (['EXPENSE', 'CREDIT_CARD', 'CREDIT_EXPENSE'].includes(type) && isDateInPeriod(itemDate)) {
                 const txCat = getTxCategory(t);
                 if (isCategoryMatching(targetCategory, txCat, t.title)) {
@@ -574,10 +571,29 @@
     }
 
     function handleLogout() {
-      window.location.href = 'login.html';
+      if (typeof signOut === 'function') {
+        signOut();
+      } else {
+        window.location.href = 'login.html';
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ตรวจสอบ Authentication และดึงอีเมลมาแสดง
+      if (typeof getCurrentUser === 'function') {
+        const user = await getCurrentUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const emailDisplay = document.getElementById('userEmailDisplay');
+        if (emailDisplay && user.email) {
+          const username = user.email.split('@')[0];
+          emailDisplay.innerText = `คุณ ${username}`;
+        }
+      }
+
       updatePeriodDisplay();
       loadData();
     });

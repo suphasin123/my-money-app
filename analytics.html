@@ -25,7 +25,7 @@
         </div>
         <div>
           <span class="font-bold text-sm text-gray-900 block leading-tight">วิเคราะห์การเงิน</span>
-          <span class="text-[10px] text-gray-400">คุณ Nop</span>
+          <span id="userEmailDisplay" class="text-[10px] text-gray-400">กำลังโหลด...</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <!-- ส่วนสรุปยอดจำแนกตามช่องทาง (เงินสด / เงินโอน-ธนาคาร / บัตรเครดิต) -->
+    <!-- ส่วนสรุปยอดจำแนกตามช่องทาง -->
     <div class="px-4 mt-3">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">สรุปยอดตามประเภทช่องทาง</h3>
@@ -106,7 +106,6 @@
         </div>
         
         <div id="breakdownContainer" class="space-y-3.5 text-xs">
-          <!-- เรนเดอร์หมวดหมู่ผ่าน JS -->
         </div>
       </div>
     </div>
@@ -119,7 +118,6 @@
         </div>
         
         <div id="transactionContainer" class="space-y-2.5 text-xs">
-          <!-- เรนเดอร์ผ่าน JS -->
         </div>
       </div>
     </div>
@@ -144,6 +142,10 @@
     </nav>
 
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
 
   <script>
     let selectedDate = new Date();
@@ -181,14 +183,12 @@
       return { icon: 'fa-tag', color: 'bg-blue-600', badge: 'text-blue-600' };
     }
 
-    // ฟังก์ชันดึงหมวดหมู่ที่แท้จริง: หาก category เป็นชื่อบัตรเครดิต ให้ดึงคำแรกของ title มาเป็นหมวดหมู่
     function getCleanCategory(tx) {
       let rawCat = (tx.category || '').trim();
       let title = (tx.title || '').trim();
 
-      // ถ้ารายการนี้เก็บ category เป็นชื่อบัญชี/บัตรเครดิต ให้ดึงชื่อสิ่งของจาก title แทน
       if (!rawCat || knownAccounts.includes(rawCat) || rawCat === 'KTC' || rawCat === 'KBANK' || rawCat === 'SCB') {
-        let firstWord = title.split(/[\s(]/)[0]; // ดึงคำแรกก่อนเว้นวรรคหรือวงเล็บ
+        let firstWord = title.split(/[\s(]/)[0];
         if (firstWord && !knownAccounts.includes(firstWord)) {
           return firstWord;
         }
@@ -453,16 +453,31 @@
     }
 
     function handleLogout() {
-      window.location.href = 'login.html';
+      if (typeof signOut === 'function') {
+        signOut();
+      } else {
+        window.location.href = 'login.html';
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ตรวจสอบ Authentication
+      if (typeof getCurrentUser === 'function') {
+        const user = await getCurrentUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const emailDisplay = document.getElementById('userEmailDisplay');
+        if (emailDisplay && user.email) {
+          const username = user.email.split('@')[0];
+          emailDisplay.innerText = `คุณ ${username}`;
+        }
+      }
+
       updateDateDisplay();
     });
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>

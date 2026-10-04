@@ -25,7 +25,7 @@
         </div>
         <div>
           <p class="text-[10px] text-gray-400 leading-none">ยินดีต้อนรับ</p>
-          <span class="font-bold text-sm text-gray-800">คุณ Nop</span>
+          <span id="userEmailDisplay" class="font-bold text-sm text-gray-800">กำลังโหลด...</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -590,7 +590,11 @@
     }
 
     function handleLogout() {
-      window.location.href = 'login.html';
+      if (typeof signOut === 'function') {
+        signOut();
+      } else {
+        window.location.href = 'login.html';
+      }
     }
 
     async function loadDashboardData() {
@@ -756,11 +760,13 @@
         installmentInfo = ` (ผ่อน ${months} งวด เดือนละ ฿${monthly}${stmt ? ' สรุปวันที่ '+stmt : ''}${due ? ' จ่ายวันที่ '+due : ''})`;
       }
 
+      let cardName = document.getElementById('modalAccount') ? document.getElementById('modalAccount').value : '';
+
       let transactionData = {
-        title: description + installmentInfo,
+        title: currentTransactionType === 'credit_card' ? `[${cardName}] ${description}${installmentInfo}` : description + installmentInfo,
         amount: amount,
         type: currentTransactionType === 'credit_card' ? 'CREDIT_CARD' : currentTransactionType.toUpperCase(),
-        category: category,
+        category: currentTransactionType === 'credit_card' ? cardName : category,
         created_at: customDate ? `${customDate}T00:00:00.000Z` : new Date().toISOString()
       };
 
@@ -775,44 +781,47 @@
         transactionData.type = 'PAY_DEBT';
         transactionData.title = `ชำระหนี้ ${payTo} จาก ${payFrom} (${description})`;
         transactionData.category = payTo; 
-      } else if (currentTransactionType === 'credit_card') {
-        const cardName = document.getElementById('modalAccount').value;
-        transactionData.title = `[${cardName}] ${description}`;
-        transactionData.category = category;
-      } else {
+      } else if (currentTransactionType !== 'credit_card') {
         transactionData.category = document.getElementById('modalAccount').value; 
       }
 
-      try {
-        if (!window.dbClient) {
-          alert('ยังไม่ได้เชื่อมต่อฐานข้อมูล');
-          return;
+      if (typeof addTransaction === 'function') {
+        const success = await addTransaction(
+          transactionData.title,
+          transactionData.amount,
+          transactionData.type,
+          transactionData.category,
+          { created_at: transactionData.created_at }
+        );
+
+        if (success) {
+          alert('บันทึกรายการสำเร็จ!');
+          closeAddModal();
+          this.reset();
+          setTransactionType('expense');
+          updateDateDisplay();
+          loadDashboardData();
         }
-
-        const { data, error } = await window.dbClient
-          .from('transactions')
-          .insert([transactionData]);
-
-        if (error) {
-          console.error('❌ บันทึกไม่สำเร็จ:', error.message);
-          alert('บันทึกไม่สำเร็จ: ' + error.message);
-          return;
-        }
-
-        alert('บันทึกรายการสำเร็จ!');
-        closeAddModal();
-        this.reset();
-        setTransactionType('expense');
-        updateDateDisplay();
-        loadDashboardData();
-
-      } catch (error) {
-        console.error("เกิดข้อผิดพลาด:", error.message);
-        alert('เกิดข้อผิดพลาด: ' + error.message);
       }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. เช็กสถานะ User
+      if (typeof getCurrentUser === 'function') {
+        const user = await getCurrentUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const emailDisplay = document.getElementById('userEmailDisplay');
+        if (emailDisplay && user.email) {
+          const username = user.email.split('@')[0];
+          emailDisplay.innerText = `คุณ ${username}`;
+        }
+      }
+
+      // 2. โหลดข้อมูลตามวันที่
       updateDateDisplay();
       loadDashboardData();
     });

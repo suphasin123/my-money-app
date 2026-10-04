@@ -25,7 +25,7 @@
         </div>
         <div>
           <span class="font-bold text-sm text-gray-900 block leading-tight">กระเป๋าเงิน</span>
-          <span class="text-[10px] text-gray-400">คุณ Nop</span>
+          <span id="userEmailDisplay" class="text-[10px] text-gray-400">กำลังโหลด...</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -521,7 +521,22 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ตรวจสอบ Authentication
+      if (typeof getCurrentUser === 'function') {
+        const user = await getCurrentUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const emailDisplay = document.getElementById('userEmailDisplay');
+        if (emailDisplay && user.email) {
+          const username = user.email.split('@')[0];
+          emailDisplay.innerText = `คุณ ${username}`;
+        }
+      }
+
       loadAccountsData();
     });
   </script>

@@ -18,96 +18,18 @@
 })();
 
 // ==========================================
-// ฟังก์ชันจัดการข้อมูล Transactions
+// ระบบจัดการผู้ใช้งาน (Auth)
 // ==========================================
-async function fetchTransactions() {
-    if (!window.dbClient) return [];
-    const { data, error } = await window.dbClient
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+async function getCurrentUser() {
+    if (!window.dbClient) return null;
+    const { data: { session }, error } = await window.dbClient.auth.getSession();
     if (error) {
-        console.error('❌ ดึงข้อมูลไม่สำเร็จ:', error.message);
-        return [];
+        console.error('❌ ดึง Session ไม่สำเร็จ:', error.message);
+        return null;
     }
-    return data;
+    return session ? session.user : null;
 }
 
-async function addTransaction(name, amount, type, category = 'General') {
-    if (!window.dbClient) {
-        alert('ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase');
-        return false;
-    }
-    const { data, error } = await window.dbClient
-        .from('transactions')
-        .insert([
-            { 
-                title: name,           
-                amount: parseFloat(amount), 
-                type: type,            
-                category: category     
-            }
-        ]);
-
-    if (error) {
-        console.error('❌ บันทึกข้อมูลไม่สำเร็จ:', error.message);
-        alert('บันทึกข้อมูลไม่สำเร็จ: ' + error.message);
-        return false;
-    }
-    
-    console.log('✅ บันทึกข้อมูลสำเร็จ!', data);
-    return true;
-}
-
-async function fetchTransactionsByType(type) {
-    if (!window.dbClient) return [];
-    const { data, error } = await window.dbClient
-        .from('transactions')
-        .select('*')
-        .eq('type', type)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error(`❌ ดึงข้อมูลประเภท ${type} ไม่สำเร็จ:`, error.message);
-        return [];
-    }
-    return data;
-}
-
-async function deleteTransaction(id) {
-    if (!window.dbClient) return false;
-    const { error } = await window.dbClient
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        console.error('❌ ลบข้อมูลไม่สำเร็จ:', error.message);
-        alert('ลบข้อมูลไม่สำเร็จ: ' + error.message);
-        return false;
-    }
-    return true;
-}
-
-async function updateTransaction(id, updatedData) {
-    if (!window.dbClient) return false;
-    const { data, error } = await window.dbClient
-        .from('transactions')
-        .update(updatedData)
-        .eq('id', id);
-
-    if (error) {
-        console.error('❌ แก้ไขข้อมูลไม่สำเร็จ:', error.message);
-        alert('แก้ไขข้อมูลไม่สำเร็จ: ' + error.message);
-        return false;
-    }
-    return true;
-}
-
-// ==========================================
-// ระบบจัดการผู้ใช้งาน (Auth) - อัปเดตใช้ window.dbClient
-// ==========================================
 async function signUp(email, password) {
     if (!window.dbClient) return false;
     const { data, error } = await window.dbClient.auth.signUp({ email, password });
@@ -137,15 +59,123 @@ async function signOut() {
         console.error('❌ ออกจากระบบไม่สำเร็จ:', error.message);
         return;
     }
-    window.location.reload();
+    window.location.href = 'login.html';
 }
 
-async function getCurrentUser() {
-    if (!window.dbClient) return null;
-    const { data: { session }, error } = await window.dbClient.auth.getSession();
+// ==========================================
+// ฟังก์ชันจัดการข้อมูล Transactions (ผูกตาม user_id)
+// ==========================================
+async function fetchTransactions() {
+    if (!window.dbClient) return [];
+    
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await window.dbClient
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id) // 👈 ดึงเฉพาะของ user ที่เข้าสู่ระบบอยู่
+        .order('created_at', { ascending: false });
+
     if (error) {
-        console.error('❌ ดึง Session ไม่สำเร็จ:', error.message);
-        return null;
+        console.error('❌ ดึงข้อมูลไม่สำเร็จ:', error.message);
+        return [];
     }
-    return session ? session.user : null;
+    return data;
+}
+
+async function addTransaction(name, amount, type, category = 'General', extraData = {}) {
+    if (!window.dbClient) {
+        alert('ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase');
+        return false;
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+        alert('กรุณาเข้าสู่ระบบก่อนทำรายการ');
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    const payload = {
+        user_id: user.id, // 👈 บันทึก user_id ของผู้ใช้ปัจจุบัน
+        title: name,
+        amount: parseFloat(amount),
+        type: type,
+        category: category,
+        ...extraData // 👈 รวมข้อมูลเพิ่มเติม เช่น limit, statement_date, target_amount
+    };
+
+    const { data, error } = await window.dbClient
+        .from('transactions')
+        .insert([payload]);
+
+    if (error) {
+        console.error('❌ บันทึกข้อมูลไม่สำเร็จ:', error.message);
+        alert('บันทึกข้อมูลไม่สำเร็จ: ' + error.message);
+        return false;
+    }
+    
+    console.log('✅ บันทึกข้อมูลสำเร็จ!', data);
+    return true;
+}
+
+async function fetchTransactionsByType(type) {
+    if (!window.dbClient) return [];
+
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await window.dbClient
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id) // 👈 ดึงตาม user_id
+        .eq('type', type)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(`❌ ดึงข้อมูลประเภท ${type} ไม่สำเร็จ:`, error.message);
+        return [];
+    }
+    return data;
+}
+
+async function deleteTransaction(id) {
+    if (!window.dbClient) return false;
+
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { error } = await window.dbClient
+        .from('transactions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // 👈 ป้องกันการลบข้อมูลข้าม user
+
+    if (error) {
+        console.error('❌ ลบข้อมูลไม่สำเร็จ:', error.message);
+        alert('ลบข้อมูลไม่สำเร็จ: ' + error.message);
+        return false;
+    }
+    return true;
+}
+
+async function updateTransaction(id, updatedData) {
+    if (!window.dbClient) return false;
+
+    const user = await getCurrentUser();
+    if (!user) return false;
+
+    const { data, error } = await window.dbClient
+        .from('transactions')
+        .update(updatedData)
+        .eq('id', id)
+        .eq('user_id', user.id); // 👈 ป้องกันการแก้ไขข้อมูลข้าม user
+
+    if (error) {
+        console.error('❌ แก้ไขข้อมูลไม่สำเร็จ:', error.message);
+        alert('แก้ไขข้อมูลไม่สำเร็จ: ' + error.message);
+        return false;
+    }
+    return true;
 }
